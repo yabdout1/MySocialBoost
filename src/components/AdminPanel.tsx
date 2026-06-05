@@ -12,8 +12,18 @@ import {
   ChevronRight,
   Database,
   Search,
-  Bell
+  Bell,
+  Copy,
+  Terminal,
+  Server
 } from 'lucide-react';
+import { 
+  isSupabaseConfigured, 
+  SUPABASE_SQL_SETUP, 
+  getSupabaseUrlAndKey,
+  testSupabase,
+  SupabaseTestResult
+} from '../supabase';
 
 interface PendingProof {
   id: string;
@@ -65,6 +75,37 @@ export default function AdminPanel({ onManualApprove, addNotification }: AdminPa
   });
 
   const [configSuccess, setConfigSuccess] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
+  const [showFullSql, setShowFullSql] = useState(false);
+  
+  const [diagnosticResult, setDiagnosticResult] = useState<SupabaseTestResult | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
+
+  const handleRunDiagnostics = async () => {
+    setIsTesting(true);
+    try {
+      const res = await testSupabase();
+      setDiagnosticResult(res);
+      if (res.success) {
+        addNotification('Diagnostic Réussi ! ⚡', 'La connexion à Supabase et toutes les tables testées fonctionnent.', 'success');
+      } else {
+        addNotification('Résultat du Test ⚠️', res.message, 'warning');
+      }
+    } catch (err: any) {
+      addNotification('Erreur Test Connexion ❌', err?.message || String(err), 'warning');
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const handleCopySql = () => {
+    navigator.clipboard.writeText(SUPABASE_SQL_SETUP);
+    setCopiedSql(true);
+    addNotification('SQL Copié ! 📋', 'La structure de base de données a été copiée dans votre presse-papiers.', 'success');
+    setTimeout(() => setCopiedSql(false), 2000);
+  };
+
+  const dbStatus = getSupabaseUrlAndKey();
 
   const approveProof = (id: string, name: string) => {
     setProofs(proofs.filter(p => p.id !== id));
@@ -258,6 +299,194 @@ export default function AdminPanel({ onManualApprove, addNotification }: AdminPa
           </form>
         </div>
 
+      </div>
+
+      {/* NEW: Supabase Live Synclocker Terminal and PostgreSQL Editor (Bento Span) */}
+      <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-100 dark:border-zinc-800 shadow-md p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b pb-4 border-slate-50 dark:border-zinc-850">
+          <div className="space-y-1">
+            <h3 className="text-sm font-extrabold flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+              <Database className="w-5 h-5 text-indigo-500" />
+              Intégration &amp; Synchronisation Supabase Backend
+            </h3>
+            <p className="text-xs text-slate-400">
+              Vérifiez la connectivité en temps réel de votre base PostgreSQL et gérez la structure de vos tables.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {dbStatus.configured ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 rounded-full animate-pulse border border-emerald-100/50 dark:border-emerald-900/40">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                ● Supabase Connecté &amp; Actif
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400 rounded-full border border-amber-100/50 dark:border-amber-900/40">
+                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                ● Mode Local Intelligent (Sécurité Active)
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Step 1 &amp; Diagnostics (Left) */}
+          <div className="lg:col-span-5 space-y-4 text-xs">
+            <div className="p-4 bg-slate-50/50 dark:bg-zinc-950/30 rounded-2xl border border-slate-100 dark:border-zinc-850 space-y-3">
+              <h4 className="font-extrabold text-slate-800 dark:text-zinc-200 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                <Server className="w-3.5 h-3.5 text-indigo-500" />
+                Statut des Variables d'environnement
+              </h4>
+              
+              <ul className="space-y-2 font-mono text-[10px]">
+                <li className="flex items-center justify-between p-1.5 rounded bg-white dark:bg-zinc-900">
+                  <span className="text-slate-400">VITE_SUPABASE_URL</span>
+                  {dbStatus.url ? (
+                    <span className="text-emerald-500 font-bold">Injecté ✅</span>
+                  ) : (
+                    <span className="text-rose-500 font-bold">Non Détecté ❌</span>
+                  )}
+                </li>
+                <li className="flex items-center justify-between p-1.5 rounded bg-white dark:bg-zinc-900">
+                  <span className="text-slate-400">VITE_SUPABASE_ANON_KEY</span>
+                  {dbStatus.configured ? (
+                    <span className="text-emerald-500 font-bold">Injecté ✅</span>
+                  ) : (
+                    <span className="text-rose-500 font-bold">Non Détecté ❌</span>
+                  )}
+                </li>
+              </ul>
+            </div>
+
+            {/* Live Database Prober / diagnosticResult */}
+            <div className="p-4 bg-slate-50/50 dark:bg-zinc-950/30 rounded-2xl border border-slate-100 dark:border-zinc-850 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-extrabold text-slate-800 dark:text-zinc-200 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                  <Database className="w-3.5 h-3.5 text-indigo-500" />
+                  Diagnostic des Tables Supabase
+                </h4>
+                <button
+                  type="button"
+                  id="btn-run-diag"
+                  onClick={handleRunDiagnostics}
+                  disabled={isTesting}
+                  className="px-2.5 py-1 text-[9px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 rounded-lg flex items-center gap-1 cursor-pointer transition-all"
+                >
+                  {isTesting ? 'Sondage...' : 'Tester les Tables'}
+                </button>
+              </div>
+
+              {diagnosticResult ? (
+                <div className="space-y-2 mt-2 font-sans">
+                  <div className={`p-2.5 rounded-xl text-[10.5px] ${diagnosticResult.success ? 'bg-emerald-50 text-emerald-850 dark:bg-emerald-950/20 dark:text-emerald-400' : 'bg-rose-50 text-rose-850 dark:bg-rose-950/20 dark:text-rose-400'}`}>
+                    <p className="font-semibold leading-normal">{diagnosticResult.message}</p>
+                    <p className="text-[8px] mt-1 text-slate-400 font-mono">Dernier test : {diagnosticResult.timestamp}</p>
+                  </div>
+
+                  <div className="divide-y divide-slate-105 dark:divide-zinc-850">
+                    {diagnosticResult.tables.map(t => (
+                      <div key={t.name} className="py-2 flex items-center justify-between font-mono text-[9px]">
+                        <span className="text-gray-600 dark:text-zinc-400">{t.name}</span>
+                        <div className="flex items-center gap-1.5">
+                          {t.exists ? (
+                            <>
+                              <span className="text-emerald-500 font-bold text-[9px]">En Ligne ✅</span>
+                              <span className="text-slate-500 bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-[8px] font-bold">
+                                {t.rowCount !== null ? `${t.rowCount} lignes` : '0 lignes'}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-rose-500 font-bold" title={t.error || ''}>Manquante ❌</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[10px] text-gray-400 italic font-sans class-name-diag">
+                  Cliquez sur "Tester les Tables" ci-dessus pour sonder l'existence et récupérer le nombre de rangées de notre schéma public.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-3 p-1.5">
+              <h4 className="font-bold text-slate-800 dark:text-zinc-200">Comment connecter votre base de données Supabase ?</h4>
+              <ol className="list-decimal list-inside space-y-2 text-slate-500">
+                <li>Créez un projet gratuit en allant sur <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className="text-indigo-500 underline">supabase.com</a>.</li>
+                <li>Cliquez sur <strong>Project Settings &gt; API</strong> pour copier l'URL et la clé ANON publique.</li>
+                <li>Ouvrez le menu <strong>Secrets  (Settings)</strong> de Google AI Studio.</li>
+                <li>Configurez les deux variables de clé :
+                  <div className="p-1.5 font-mono text-[9px] bg-slate-100 dark:bg-zinc-950 text-indigo-600 rounded my-1 select-all dark:text-indigo-400">
+                    VITE_SUPABASE_URL = "votre_url_de_projet_supabase"<br/>
+                    VITE_SUPABASE_ANON_KEY = "votre_cle_anon_publique"
+                  </div>
+                </li>
+                <li>Collez le script SQL (à droite) dans l'onglet <strong>SQL Editor</strong> de Supabase et exécutez-le.</li>
+              </ol>
+            </div>
+          </div>
+
+          {/* SQL Editor script box (Right) */}
+          <div className="lg:col-span-7 space-y-3">
+            <div className="flex justify-between items-center bg-slate-100 dark:bg-zinc-950 px-4 py-2 rounded-t-xl border-t border-x border-slate-200 dark:border-zinc-850">
+              <span className="font-mono text-[10px] text-slate-400 flex items-center gap-1.5">
+                <Terminal className="w-3.5 h-3.5 text-indigo-500" />
+                structure_socialboost.sql
+              </span>
+              <button
+                type="button"
+                id="copy-supabase-sql-btn"
+                onClick={handleCopySql}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold text-slate-700 bg-white hover:bg-slate-50 dark:bg-zinc-900 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 rounded transition-colors cursor-pointer"
+              >
+                {copiedSql ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    Copié !
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-indigo-500" />
+                    Copier le code SQL
+                  </>
+                )}
+              </button>
+            </div>
+            
+            <div className="relative">
+              <pre className={`p-4 bg-slate-900 border border-slate-800 text-zinc-300 font-mono text-[9px] rounded-b-xl overflow-x-auto select-all transition-all duration-300 ${showFullSql ? 'max-h-[500px]' : 'max-h-[220px]'}`}>
+                {SUPABASE_SQL_SETUP}
+              </pre>
+              
+              {!showFullSql && (
+                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-900 to-transparent flex items-end justify-center pb-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowFullSql(true)}
+                    className="px-3 py-1 text-[9px] font-bold text-indigo-300 bg-slate-850 hover:bg-slate-800 border border-indigo-900/50 rounded-full transition-colors cursor-pointer mb-1 shadow-sm"
+                  >
+                    Développer le script complet
+                  </button>
+                </div>
+              )}
+
+              {showFullSql && (
+                <div className="flex justify-center mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowFullSql(false)}
+                    className="px-3 py-1 text-[9px] font-bold text-indigo-300 bg-slate-800 hover:bg-slate-750 border border-indigo-900/50 rounded-full transition-colors cursor-pointer"
+                  >
+                    Réduire le script
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
       </div>
 
     </div>

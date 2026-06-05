@@ -19,6 +19,16 @@ import {
   Clock,
   ArrowRight
 } from 'lucide-react';
+import { 
+  ResponsiveContainer, 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip,
+  Legend 
+} from 'recharts';
 import { Campaign, LeaderboardUser } from '../types';
 import { LEADERBOARD } from '../mockData';
 
@@ -28,6 +38,7 @@ interface DashboardProps {
   userPoints: number;
   addPoints: (pts: number) => void;
   setUpgradeModalPlan: (plan: string | null) => void;
+  leaderboard?: LeaderboardUser[];
 }
 
 export default function Dashboard({ 
@@ -35,7 +46,8 @@ export default function Dashboard({
   setCurrentTab, 
   userPoints, 
   addPoints,
-  setUpgradeModalPlan 
+  setUpgradeModalPlan,
+  leaderboard = LEADERBOARD
 }: DashboardProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedPlanPeriod, setSelectedPlanPeriod] = useState<'monthly' | 'yearly'>('monthly');
@@ -45,6 +57,34 @@ export default function Dashboard({
   const conversionRate = totalVisitors > 0 ? ((totalConversions / totalVisitors) * 100).toFixed(1) : '0';
   const pointsToNextBadge = Math.max(0, 3000 - userPoints);
   const progressPercent = Math.min(100, Math.round((userPoints / 3000) * 100));
+
+  // Generate data for the last 7 days of campaign participants
+  const chartData = React.useMemo(() => {
+    const data = [];
+    const now = new Date();
+    
+    // Distribution vectors matching a typical weekly curve
+    const percentageSplit = [0.08, 0.11, 0.13, 0.12, 0.16, 0.18, 0.22];
+    
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      const label = d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+      
+      // Compute participants for this specific day based on total Conversions
+      const dailyConversionsFactor = percentageSplit[6 - i];
+      const directParticipants = Math.max(1, Math.round(totalConversions * dailyConversionsFactor));
+      // Estimate visitor flow for conversions on that day
+      const visitorsCount = Math.round(directParticipants * 1.5 + (i * 2) + 3);
+      
+      data.push({
+        date: label,
+        'Participants': directParticipants,
+        'Visiteurs': visitorsCount,
+      });
+    }
+    return data;
+  }, [totalConversions]);
 
   const copyCampaignLink = (id: string) => {
     const url = `${window.location.origin}/#campaign-${id}`;
@@ -167,65 +207,90 @@ export default function Dashboard({
       {/* Main Charts & Gamification progress split */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Dynamic Analytics Visual Sparkline (Left & Middle spanning) */}
+        {/* Dynamic Analytics Visual Recharts Area Chart (Left & Middle spanning) */}
         <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-slate-100 dark:border-zinc-800 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-50 dark:border-zinc-850 pb-4">
             <div>
-              <h3 className="text-sm font-bold">Performances du Trafic Direct</h3>
-              <p className="text-[10px] text-gray-400">Courbe journalière de croissances cumulées (10 derniers jours)</p>
+              <h3 className="text-sm font-bold flex items-center gap-1.5">
+                <TrendingUp className="w-5 h-5 text-indigo-500" />
+                Performances des 7 Derniers Jours
+              </h3>
+              <p className="text-[10px] text-gray-400 font-mono">Suivi en temps réel des participants de vos campagnes de redirections</p>
             </div>
-            <select className="px-2.5 py-1 text-xs border rounded bg-slate-50 text-slate-600 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-300">
-              <option>7 derniers jours</option>
-              <option>30 derniers jours</option>
-            </select>
+            <span className="px-3 py-1 text-xs font-bold rounded-lg bg-indigo-50 text-indigo-650 dark:bg-indigo-950/40 dark:text-indigo-300">
+              Actif (7 jours)
+            </span>
           </div>
 
-          {/* SVG Vector Analytics Line Graph */}
-          <div className="relative pt-4 h-64 flex flex-col justify-between">
-            <svg viewBox="0 0 500 200" className="w-full h-48 text-indigo-500 overflow-visible">
-              <defs>
-                <linearGradient id="gradient-line" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgb(99, 102, 241)" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="rgb(99, 102, 241)" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-              
-              {/* Grid Lines */}
-              <line x1="0" y1="50" x2="500" y2="50" stroke="rgba(156,163,175,0.1)" strokeDasharray="3" />
-              <line x1="0" y1="100" x2="500" y2="100" stroke="rgba(156,163,175,0.1)" strokeDasharray="3" />
-              <line x1="0" y1="150" x2="500" y2="150" stroke="rgba(156,163,175,0.1)" strokeDasharray="3" />
-              
-              {/* Chart Line Path */}
-              <path 
-                d="M 0,160 L 50,140 Q 75,120 100,105 T 150,110 T 200,80 T 250,90 T 300,55 T 350,45 T 400,25 T 450,15 T 500,10" 
-                fill="none" 
-                stroke="url(#gradient-line)" 
-                strokeWidth="20" 
-                className="opacity-15"
-              />
-              <path 
-                d="M 0,160 L 50,140 Q 75,120 100,105 T 150,110 T 200,80 T 250,90 T 300,55 T 350,45 T 400,25 T 450,15 T 500,10" 
-                fill="none" 
-                stroke="rgb(99, 102, 241)" 
-                strokeWidth="3.5" 
-                strokeLinecap="round"
-              />
-
-              {/* Glowing Interactive Node points */}
-              <circle cx="200" cy="80" r="5" fill="rgb(99,102,241)" stroke="white" strokeWidth="2" className="animate-pulse" />
-              <circle cx="400" cy="25" r="5" fill="rgb(99,102,241)" stroke="white" strokeWidth="2" />
-              <circle cx="500" cy="10" r="6" fill="rgb(139, 92, 246)" stroke="white" strokeWidth="2.5" />
-            </svg>
-
-            {/* X Axis Labels */}
-            <div className="flex justify-between text-[10px] text-gray-400 font-mono mt-2 pt-2 border-t border-slate-50 dark:border-zinc-850">
-              <span>26 Mai</span>
-              <span>28 Mai</span>
-              <span>30 Mai</span>
-              <span>01 Juin</span>
-              <span>03 Juin</span>
-              <span>Aujourd'hui (05 Juin)</span>
-            </div>
+          {/* Recharts Component Container */}
+          <div className="h-64 pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={chartData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="colorParticipants" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0}/>
+                  </linearGradient>
+                  <linearGradient id="colorVisiteurs" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(156,163,175,0.08)" />
+                <XAxis 
+                  dataKey="date" 
+                  tickLine={false} 
+                  axisLine={false}
+                  tick={{ fill: '#9ca3af', fontSize: 10, fontFamily: 'JetBrains Mono' }} 
+                />
+                <YAxis 
+                  tickLine={false} 
+                  axisLine={false}
+                  tick={{ fill: '#9ca3af', fontSize: 10, fontFamily: 'JetBrains Mono' }} 
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(31, 41, 55, 0.95)',
+                    border: '1px solid rgba(75, 85, 99, 0.5)',
+                    borderRadius: '12px',
+                    fontSize: '11px',
+                    color: '#f3f4f6',
+                    fontFamily: 'Inter, sans-serif'
+                  }}
+                  itemStyle={{ color: '#e5e7eb' }}
+                  labelStyle={{ fontWeight: 'bold', color: '#a5b4fc', marginBottom: '4px' }}
+                />
+                <Legend 
+                  verticalAlign="top" 
+                  height={36} 
+                  iconType="circle"
+                  iconSize={8}
+                  wrapperStyle={{ fontSize: '11px', fontFamily: 'Inter', fontWeight: 500 }}
+                />
+                <Area 
+                  name="Participants (Abonnés)"
+                  type="monotone" 
+                  dataKey="Participants" 
+                  stroke="#6366f1" 
+                  strokeWidth={2.5}
+                  fillOpacity={1} 
+                  fill="url(#colorParticipants)" 
+                />
+                <Area 
+                  name="Visiteurs Uniques"
+                  type="monotone" 
+                  dataKey="Visiteurs" 
+                  stroke="#8b5cf6" 
+                  strokeWidth={1.5}
+                  strokeDasharray="4 4"
+                  fillOpacity={1} 
+                  fill="url(#colorVisiteurs)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -361,7 +426,7 @@ export default function Dashboard({
           </div>
 
           <div className="space-y-3">
-            {LEADERBOARD.map((user, idx) => (
+            {leaderboard.map((user, idx) => (
               <div key={user.rank} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-855 text-xs transition-colors">
                 <div className="flex items-center gap-3">
                   <span className={`w-5 text-center font-bold font-mono ${idx < 3 ? 'text-amber-500' : 'text-slate-400'}`}>

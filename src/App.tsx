@@ -22,9 +22,21 @@ import RewardLibrary from './components/RewardLibrary';
 import Affiliation from './components/Affiliation';
 import SupportPages from './components/SupportPages';
 import AdminPanel from './components/AdminPanel';
+import LoginPage from './components/LoginPage';
 
-import { Campaign, RewardFile, AlertNotification } from './types';
-import { INITIAL_CAMPAIGNS, DEFAULT_REWARDS_LIBRARY } from './mockData';
+import { Campaign, RewardFile, AlertNotification, LeaderboardUser } from './types';
+import { INITIAL_CAMPAIGNS, DEFAULT_REWARDS_LIBRARY, LEADERBOARD } from './mockData';
+import { 
+  isSupabaseConfigured, 
+  dbFetchCampaigns, 
+  dbInsertCampaign, 
+  dbDeleteCampaign, 
+  dbIncrementParticipants,
+  dbFetchFiles,
+  dbInsertFile,
+  dbDeleteFile,
+  dbFetchUsers
+} from './supabase';
 
 export default function App() {
   // Theme Manager
@@ -51,6 +63,7 @@ export default function App() {
   // Databases (Saved to client side localStorage)
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [files, setFiles] = useState<RewardFile[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
   const [notifications, setNotifications] = useState<AlertNotification[]>([
     {
       id: 'not-1',
@@ -91,36 +104,93 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [campaigns]);
 
-  // Load from LocalStorage or seed defaults
+  // Load from Supabase (if configured) or fallback to LocalStorage/mock defaults
   useEffect(() => {
-    const localCamps = localStorage.getItem('socialboost_campaigns');
-    const localFiles = localStorage.getItem('socialboost_files');
-    const localPoints = localStorage.getItem('socialboost_points');
+    async function loadData() {
+      const configured = isSupabaseConfigured();
+      
+      // Load user points from local storage
+      const localPoints = localStorage.getItem('socialboost_points');
+      if (localPoints) {
+        setUserPoints(parseInt(localPoints));
+      } else {
+        setUserPoints(750);
+        localStorage.setItem('socialboost_points', '750');
+      }
 
-    if (localCamps) {
-      setCampaigns(JSON.parse(localCamps));
-    } else {
-      setCampaigns(INITIAL_CAMPAIGNS);
-      localStorage.setItem('socialboost_campaigns', JSON.stringify(INITIAL_CAMPAIGNS));
+      if (configured) {
+        addNotification('Connexion Supabase ⚡', 'Tentative de synchronisation en temps réel avec le backend Supabase...', 'info');
+        
+        // 1. Load Campaigns
+        const dbCamps = await dbFetchCampaigns();
+        if (dbCamps) {
+          setCampaigns(dbCamps);
+          localStorage.setItem('socialboost_campaigns', JSON.stringify(dbCamps));
+          addNotification('Synchronisation Réussie 💎', `${dbCamps.length} campagnes récupérées de Supabase.`, 'success');
+        } else {
+          // Fallback to local files if Supabase is connected but tables are empty/erroring
+          const localCamps = localStorage.getItem('socialboost_campaigns');
+          const campsToInstall = localCamps ? JSON.parse(localCamps) : INITIAL_CAMPAIGNS;
+          setCampaigns(campsToInstall);
+          localStorage.setItem('socialboost_campaigns', JSON.stringify(campsToInstall));
+        }
+
+        // 2. Load FILES
+        const dbRewardFiles = await dbFetchFiles();
+        if (dbRewardFiles) {
+          setFiles(dbRewardFiles);
+          localStorage.setItem('socialboost_files', JSON.stringify(dbRewardFiles));
+        } else {
+          const localFiles = localStorage.getItem('socialboost_files');
+          const filesToInstall = localFiles ? JSON.parse(localFiles) : DEFAULT_REWARDS_LIBRARY;
+          setFiles(filesToInstall);
+          localStorage.setItem('socialboost_files', JSON.stringify(filesToInstall));
+        }
+
+        // 3. Load LEADERBOARD / USERS
+        const dbUsers = await dbFetchUsers();
+        if (dbUsers) {
+          setLeaderboard(dbUsers);
+          localStorage.setItem('socialboost_leaderboard', JSON.stringify(dbUsers));
+        } else {
+          const localLeaderboard = localStorage.getItem('socialboost_leaderboard');
+          const leaderboardToInstall = localLeaderboard ? JSON.parse(localLeaderboard) : LEADERBOARD;
+          setLeaderboard(leaderboardToInstall);
+          localStorage.setItem('socialboost_leaderboard', JSON.stringify(leaderboardToInstall));
+        }
+      } else {
+        // Fallback to standard offline behavior
+        const localCamps = localStorage.getItem('socialboost_campaigns');
+        if (localCamps) {
+          setCampaigns(JSON.parse(localCamps));
+        } else {
+          setCampaigns(INITIAL_CAMPAIGNS);
+          localStorage.setItem('socialboost_campaigns', JSON.stringify(INITIAL_CAMPAIGNS));
+        }
+
+        const localFiles = localStorage.getItem('socialboost_files');
+        if (localFiles) {
+          setFiles(JSON.parse(localFiles));
+        } else {
+          setFiles(DEFAULT_REWARDS_LIBRARY);
+          localStorage.setItem('socialboost_files', JSON.stringify(DEFAULT_REWARDS_LIBRARY));
+        }
+
+        const localLeaderboard = localStorage.getItem('socialboost_leaderboard');
+        if (localLeaderboard) {
+          setLeaderboard(JSON.parse(localLeaderboard));
+        } else {
+          setLeaderboard(LEADERBOARD);
+          localStorage.setItem('socialboost_leaderboard', JSON.stringify(LEADERBOARD));
+        }
+      }
     }
 
-    if (localFiles) {
-      setFiles(JSON.parse(localFiles));
-    } else {
-      setFiles(DEFAULT_REWARDS_LIBRARY);
-      localStorage.setItem('socialboost_files', JSON.stringify(DEFAULT_REWARDS_LIBRARY));
-    }
-
-    if (localPoints) {
-      setUserPoints(parseInt(localPoints));
-    } else {
-      setUserPoints(750);
-      localStorage.setItem('socialboost_points', '750');
-    }
+    loadData();
   }, []);
 
   // Sync state modifications automatically
-  const addCampaign = (camp: Campaign) => {
+  const addCampaign = async (camp: Campaign) => {
     const updated = [camp, ...campaigns];
     setCampaigns(updated);
     localStorage.setItem('socialboost_campaigns', JSON.stringify(updated));
@@ -129,37 +199,74 @@ export default function App() {
       `Votre lien de distribution pour "${camp.title}" est généré et actif.`, 
       'success'
     );
+
+    if (isSupabaseConfigured()) {
+      const ok = await dbInsertCampaign(camp);
+      if (ok) {
+        addNotification('Base de données Supabase ⚡', 'Nouvelle campagne persistée avec succès.', 'success');
+      } else {
+        addNotification('Erreur de synchro ⚠️', 'Impossible d\'écrire dans Supabase. Vérifiez les tables ou les permissions RLS.', 'warning');
+      }
+    }
   };
 
-  const deleteCampaign = (id: string) => {
+  const deleteCampaign = async (id: string) => {
     const updated = campaigns.filter(c => c.id !== id);
     setCampaigns(updated);
     localStorage.setItem('socialboost_campaigns', JSON.stringify(updated));
     addNotification('Campagne Archivée 📂', 'La page d’atterrissage est suspendue.', 'info');
+
+    if (isSupabaseConfigured()) {
+      const ok = await dbDeleteCampaign(id);
+      if (ok) {
+        addNotification('Base de données Supabase ⚡', 'La campagne a été retirée de Supabase.', 'info');
+      }
+    }
   };
 
-  const incrementCampaignParticipants = (id: string) => {
+  const incrementCampaignParticipants = async (id: string) => {
+    let nextCount = 0;
     const updated = campaigns.map(c => {
       if (c.id === id) {
-        return { ...c, participantsCount: c.participantsCount + 1 };
+        nextCount = c.participantsCount + 1;
+        return { ...c, participantsCount: nextCount };
       }
       return c;
     });
     setCampaigns(updated);
     localStorage.setItem('socialboost_campaigns', JSON.stringify(updated));
+
+    if (isSupabaseConfigured() && nextCount > 0) {
+      await dbIncrementParticipants(id, nextCount);
+    }
   };
 
-  const addFile = (file: RewardFile) => {
+  const addFile = async (file: RewardFile) => {
     const updated = [file, ...files];
     setFiles(updated);
     localStorage.setItem('socialboost_files', JSON.stringify(updated));
+    addNotification('Double Enregistrement 📤', 'La ressource est prête dans votre médiathèque.', 'success');
+
+    if (isSupabaseConfigured()) {
+      const ok = await dbInsertFile(file);
+      if (ok) {
+        addNotification('Fichier synchronisé ⚡', 'Surgardé avec succès dans Supabase.', 'success');
+      }
+    }
   };
 
-  const deleteFile = (id: string) => {
+  const deleteFile = async (id: string) => {
     const updated = files.filter(f => f.id !== id);
     setFiles(updated);
     localStorage.setItem('socialboost_files', JSON.stringify(updated));
     addNotification('Fichier Supprimé', 'La ressource a été retirée de votre bibliothèque.', 'warning');
+
+    if (isSupabaseConfigured()) {
+      const ok = await dbDeleteFile(id);
+      if (ok) {
+        addNotification('Fichier synchronisé ⚡', 'Supprimé de la table Supabase.', 'warning');
+      }
+    }
   };
 
   const addPoints = (pts: number) => {
@@ -260,7 +367,12 @@ export default function App() {
           userPoints={userPoints}
           notifications={notifications}
           clearNotifications={clearNotifications}
-          setAuthModal={setAuthModalOpen}
+          setAuthModal={(open) => {
+            if (open) {
+              setCurrentTab('login');
+              setActiveExecCampaign(null);
+            }
+          }}
         />
 
         {/* Central main router screen */}
@@ -280,6 +392,17 @@ export default function App() {
             />
           ) : (
             <>
+              {/* DEDICATED LOGIN / REGISTER PAGE */}
+              {currentTab === 'login' && (
+                <LoginPage 
+                  currentTab={currentTab}
+                  setCurrentTab={setCurrentTab}
+                  userRole={userRole}
+                  setUserRole={setUserRole}
+                  addNotification={addNotification}
+                />
+              )}
+
               {/* LANDING PAGE / UNLOGGED VISITOR VIEW */}
               {currentTab === 'home' && (
                 <LandingPage 
@@ -448,6 +571,7 @@ export default function App() {
                   userPoints={userPoints}
                   addPoints={addPoints}
                   setUpgradeModalPlan={setUpgradeModalPlan}
+                  leaderboard={leaderboard}
                 />
               )}
 
