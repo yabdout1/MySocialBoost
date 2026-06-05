@@ -1,0 +1,6 @@
+{
+  "name": "SocialBoost",
+  "description": "Plateforme SaaS moderne de croissance d'audience par l'échange de valeur et de récompenses numériques.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
