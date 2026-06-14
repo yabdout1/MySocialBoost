@@ -15,6 +15,7 @@ import {
   Award
 } from 'lucide-react';
 import { AlertNotification } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HeaderProps {
   currentTab: string;
@@ -43,13 +44,17 @@ export default function Header({
 }: HeaderProps) {
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const { language, setLanguage, t, languages } = useLanguage();
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const getBadgeName = (pts: number) => {
-    if (pts >= 3000) return 'Génie d\'Audience 🌟';
-    if (pts >= 1500) return 'Partageur Fou ⚡';
-    if (pts >= 500) return 'Initié d\'Or ⭐';
-    return 'Novice Social 🚀';
+    if (pts >= 3000) return language === 'en' ? 'Audience Genius 🌟' : language === 'es' ? 'Genio de la Audiencia 🌟' : 'Génie d\'Audience 🌟';
+    if (pts >= 1500) return language === 'en' ? 'Crazy Sharer ⚡' : language === 'es' ? 'Compartidor Loco ⚡' : 'Partageur Fou ⚡';
+    if (pts >= 500) return language === 'en' ? 'Golden Initiate ⭐' : language === 'es' ? 'Iniciado de Oro ⭐' : 'Initié d\'Or ⭐';
+    return language === 'en' ? 'Social Novice 🚀' : language === 'es' ? 'Novicio Social 🚀' : 'Novice Social 🚀';
   };
 
   return (
@@ -86,7 +91,7 @@ export default function Header({
                       : 'text-gray-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-zinc-200'
                   }`}
                 >
-                  Accueil
+                  {t.navHome}
                 </button>
                 <button
                   id="nav-marketplace"
@@ -97,7 +102,7 @@ export default function Header({
                       : 'text-gray-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-zinc-200'
                   }`}
                 >
-                  Marketplace Securisée
+                  {t.navMarketplace}
                 </button>
                 <button
                   id="nav-pricing"
@@ -108,7 +113,7 @@ export default function Header({
                       : 'text-gray-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-zinc-200'
                   }`}
                 >
-                  Tarifs SaaS
+                  {t.navPricing}
                 </button>
                 <button
                   id="nav-blog"
@@ -119,7 +124,7 @@ export default function Header({
                       : 'text-gray-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-zinc-200'
                   }`}
                 >
-                  Blog
+                  {t.navBlog}
                 </button>
                 <button
                   id="nav-help"
@@ -130,7 +135,7 @@ export default function Header({
                       : 'text-gray-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-zinc-200'
                   }`}
                 >
-                  Aide
+                  {t.navHelp}
                 </button>
               </>
             ) : userRole === 'creator' ? (
@@ -144,7 +149,7 @@ export default function Header({
                       : 'text-gray-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-zinc-200'
                   }`}
                 >
-                  Tableau de bord
+                  {t.navDashboard}
                 </button>
                 <button
                   id="nav-creator-campaigns"
@@ -155,7 +160,7 @@ export default function Header({
                       : 'text-gray-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-zinc-200'
                   }`}
                 >
-                  Mes Campagnes
+                  {t.navMyCampaigns}
                 </button>
                 <button
                   id="nav-rewards-library"
@@ -166,7 +171,7 @@ export default function Header({
                       : 'text-gray-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-zinc-200'
                   }`}
                 >
-                  Bibliothèque de Cadeaux
+                  {t.navGiftsLibrary}
                 </button>
                 <button
                   id="nav-marketplace-cr"
@@ -177,7 +182,7 @@ export default function Header({
                       : 'text-gray-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-zinc-200'
                   }`}
                 >
-                  Explorer les Campagnes
+                  {t.navExploreCampaigns}
                 </button>
                 <button
                   id="nav-affiliate-cr"
@@ -188,7 +193,17 @@ export default function Header({
                       : 'text-gray-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-zinc-200'
                   }`}
                 >
-                  Affiliation
+                  {t.navAffiliation}
+                </button>
+                <button
+                  id="nav-logout-cr"
+                  onClick={() => {
+                    setUserRole('visitor');
+                    setCurrentTab('home');
+                  }}
+                  className="px-3 py-2 rounded-lg text-sm font-semibold transition-all text-rose-600 hover:bg-rose-50/50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-300"
+                >
+                  {t.logout}
                 </button>
               </>
             ) : (
@@ -202,7 +217,7 @@ export default function Header({
                       : 'text-gray-600 hover:text-violet-600 dark:text-zinc-400 dark:hover:text-zinc-250'
                   }`}
                 >
-                  Console de Modération AI
+                  {t.navAdminPanel}
                 </button>
                 <button
                   id="nav-marketplace-ad"
@@ -213,126 +228,71 @@ export default function Header({
                       : 'text-gray-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-zinc-200'
                   }`}
                 >
-                  Voir la Marketplace
+                  {t.navExploreCampaigns}
                 </button>
                 <button
                   id="nav-help-ad"
                   onClick={() => setCurrentTab('help')}
                   className="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-zinc-200"
                 >
-                  Centre d'aide
+                  {t.navHelp}
+                </button>
+                <button
+                  id="nav-logout-ad"
+                  onClick={() => {
+                    setUserRole('visitor');
+                    setCurrentTab('home');
+                  }}
+                  className="px-3 py-2 rounded-lg text-sm font-semibold transition-all text-rose-600 hover:bg-rose-50/50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/20 dark:hover:text-rose-300"
+                >
+                  {t.logout}
                 </button>
               </>
             )}
           </nav>
 
           {/* Quick Actions Panel */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             
             {/* Gamification Indicator */}
             {userRole !== 'admin' && (
               <div 
-                onClick={() => setCurrentTab('marketplace')}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-violet-100 bg-violet-50/50 hover:bg-violet-50 text-violet-700 cursor-pointer transition-all dark:border-violet-900/30 dark:bg-violet-950/20 dark:text-violet-300 dark:hover:bg-violet-950/40"
-                title="Vos points d'engagement SocialBoost"
+                onClick={() => {
+                  setCurrentTab('marketplace');
+                  setShowProfileMenu(false);
+                }}
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-violet-100 bg-violet-50/50 hover:bg-violet-50 text-violet-700 cursor-pointer transition-all dark:border-violet-900/30 dark:bg-violet-950/20 dark:text-violet-300 dark:hover:bg-violet-950/40"
+                title={language === 'en' ? 'Your SocialBoost engagement points' : language === 'es' ? 'Tus puntos de participación de SocialBoost' : "Vos points d'engagement SocialBoost"}
               >
-                <Award className="w-4 h-4 text-amber-500 fill-amber-500 animate-pulse" />
-                <span className="text-xs font-bold font-mono text-violet-800 dark:text-violet-300">
-                  {userPoints} pts
-                </span>
-                <span className="hidden md:inline text-[10px] text-violet-600/80 dark:text-violet-300/80 font-medium">
-                  ({getBadgeName(userPoints)})
+                <Award className="w-4 h-4 text-amber-500 fill-amber-500" />
+                <span className="text-xs font-extrabold font-mono text-violet-800 dark:text-violet-200">
+                  {userPoints}
                 </span>
               </div>
             )}
-
-            {/* Persona Simulator Dropdown - Extremely useful for viewing all page features */}
-            <div className="relative">
-              <button
-                id="btn-persona-selector"
-                onClick={() => setShowRoleMenu(!showRoleMenu)}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 transition-colors dark:bg-zinc-900 dark:hover:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-800"
-                title="Changer de compte d'évaluation"
-              >
-                <Cpu className="w-3.5 h-3.5 text-blue-500" />
-                <span>Simuler: {userRole === 'visitor' ? 'Visiteur' : userRole === 'creator' ? 'Créateur SaaS' : 'Admin'}</span>
-              </button>
-              
-              {showRoleMenu && (
-                <div className="absolute right-0 mt-2 w-56 rounded-xl shadow-xl bg-white border border-gray-100 py-1 z-50 text-gray-700 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-200">
-                  <div className="px-3 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-widest border-b border-gray-50 dark:border-zinc-800 dark:text-zinc-500">
-                    Changer de Personnage
-                  </div>
-                  
-                  <button
-                    id="btn-set-role-visitor"
-                    onClick={() => {
-                      setUserRole('visitor');
-                      setCurrentTab('home');
-                      setShowRoleMenu(false);
-                    }}
-                    className={`flex items-center justify-between w-full px-3 py-2 text-xs text-left hover:bg-gray-50 dark:hover:bg-zinc-850 ${userRole === 'visitor' ? 'font-bold bg-blue-50/50 text-blue-600 dark:bg-zinc-950/40 dark:text-blue-400' : ''}`}
-                  >
-                    <span>👥 Visiteur (Accéder / Racheter)</span>
-                    {userRole === 'visitor' && <Check className="w-3 h-3 text-blue-600 dark:text-blue-400" />}
-                  </button>
-                  
-                  <button
-                    id="btn-set-role-creator"
-                    onClick={() => {
-                      setUserRole('creator');
-                      setCurrentTab('creator-dashboard');
-                      setShowRoleMenu(false);
-                    }}
-                    className={`flex items-center justify-between w-full px-3 py-2 text-xs text-left hover:bg-gray-50 dark:hover:bg-zinc-850 ${userRole === 'creator' ? 'font-bold bg-blue-50/50 text-blue-600 dark:bg-zinc-950/40 dark:text-blue-400' : ''}`}
-                  >
-                    <span>💼 Créateur SaaS (Créer des campagnes)</span>
-                    {userRole === 'creator' && <Check className="w-3 h-3 text-blue-600 dark:text-blue-400" />}
-                  </button>
-                  
-                  <button
-                    id="btn-set-role-admin"
-                    onClick={() => {
-                      setUserRole('admin');
-                      setCurrentTab('admin-dashboard');
-                      setShowRoleMenu(false);
-                    }}
-                    className={`flex items-center justify-between w-full px-3 py-2 text-xs text-left hover:bg-gray-50 dark:hover:bg-zinc-850 ${userRole === 'admin' ? 'font-bold bg-violet-50/50 text-violet-600 dark:bg-zinc-950/40 dark:text-violet-400' : ''}`}
-                  >
-                    <span>🛡️ Administrateur SocialBoost</span>
-                    {userRole === 'admin' && <Check className="w-3 h-3 text-violet-600 dark:text-violet-400" />}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Dark Mode Button */}
-            <button
-              id="btn-toggle-theme"
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-900 text-gray-500 dark:text-zinc-400 transition-colors"
-              title="Changer de thème"
-            >
-              {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
-            </button>
 
             {/* Notification Bell */}
             <div className="relative">
               <button
                 id="btn-notifications-bell"
-                onClick={() => setShowNotifMenu(!showNotifMenu)}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-900 text-gray-500 dark:text-zinc-400 transition-colors relative"
+                onClick={() => {
+                  setShowNotifMenu(!showNotifMenu);
+                  setShowProfileMenu(false);
+                  setShowLangMenu(false);
+                }}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-900 text-gray-500 dark:text-zinc-400 transition-colors relative cursor-pointer"
+                title="Notifications"
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-500 text-[10px] flex items-center justify-center text-white font-bold leading-none">
+                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-500 text-[10px] flex items-center justify-center text-white font-bold leading-none animate-bounce">
                     {unreadCount}
                   </span>
                 )}
               </button>
 
               {showNotifMenu && (
-                <div className="absolute right-0 mt-2 w-80 rounded-xl shadow-xl bg-white border border-gray-100 py-1.5 z-50 text-gray-800 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100">
+                <div className="absolute right-0 mt-2 w-80 rounded-xl shadow-xl bg-white border border-gray-100 py-1.5 z-50 text-gray-800 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100 animate-fade-in">
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-50 dark:border-zinc-800">
                     <span className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500">Notifications</span>
                     {unreadCount > 0 && (
@@ -341,9 +301,9 @@ export default function Header({
                           clearNotifications();
                           setShowNotifMenu(false);
                         }} 
-                        className="text-[10px] font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                        className="text-[10px] font-semibold text-blue-600 hover:underline dark:text-blue-400 cursor-pointer"
                       >
-                        Tout marquer lu
+                        {language === 'en' ? 'Mark all as read' : language === 'es' ? 'Marcar todo como leído' : 'Tout marquer lu'}
                       </button>
                     )}
                   </div>
@@ -351,7 +311,7 @@ export default function Header({
                   <div className="max-h-64 overflow-y-auto">
                     {notifications.length === 0 ? (
                       <div className="px-4 py-6 text-center text-xs text-gray-400 dark:text-zinc-500">
-                        Aucune nouvelle notification
+                        {language === 'en' ? 'No new notifications' : language === 'es' ? 'No hay nuevas notificaciones' : 'Aucune nouvelle notification'}
                       </div>
                     ) : (
                       notifications.slice(0, 5).map((notif) => (
@@ -369,28 +329,160 @@ export default function Header({
               )}
             </div>
 
-            {/* Sign in button for simulator / login simulation button */}
-            {userRole === 'visitor' ? (
+            {/* Unified User Profile & Quick Preferences Dropdown */}
+            <div className="relative">
               <button
-                id="btn-login"
-                onClick={() => setAuthModal(true)}
-                className="hidden sm:inline-flex items-center justify-center px-4 py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white shadow-sm transition-all"
-              >
-                Connexion
-              </button>
-            ) : (
-              <button
-                id="btn-logout"
+                id="btn-user-profile-menu"
                 onClick={() => {
-                  setUserRole('visitor');
-                  setCurrentTab('home');
+                  setShowProfileMenu(!showProfileMenu);
+                  setShowNotifMenu(false);
+                  setShowLangMenu(false);
                 }}
-                className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg dark:hover:bg-rose-950/20 transition-colors"
-                title="Se déconnecter"
+                className="flex items-center gap-1.5 p-1 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition-all dark:bg-zinc-900 dark:hover:bg-zinc-850 dark:text-zinc-300 dark:border-zinc-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                title={language === 'en' ? 'Account Preferences' : language === 'es' ? 'Ajustes de Cuenta' : 'Préférences du Compte'}
               >
-                <LogOut className="w-5 h-5" />
+                {/* Visual Avatar based on User's Active Role */}
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-extrabold shadow-sm bg-gradient-to-tr ${
+                  userRole === 'visitor' 
+                    ? 'from-blue-500 to-sky-500' 
+                    : userRole === 'creator'
+                    ? 'from-indigo-500 to-violet-500'
+                    : 'from-fuchsia-500 to-purple-500'
+                }`}>
+                  {userRole === 'visitor' ? <User className="w-4 h-4" /> : userRole === 'creator' ? <Briefcase className="w-3.5 h-3.5" /> : <ShieldAlert className="w-4 h-4" />}
+                </div>
+                <span className="hidden sm:inline text-xs font-bold text-slate-700 dark:text-zinc-300 pr-1 select-none">
+                  {userRole === 'visitor' ? t.visitor : userRole === 'creator' ? t.creator : t.admin}
+                </span>
+                <span className="hidden sm:inline text-[9px] text-slate-400 dark:text-zinc-500 pr-1.5">▼</span>
               </button>
-            )}
+
+              {showProfileMenu && (
+                <div className="absolute right-0 mt-2 w-72 rounded-2xl shadow-xl bg-white border border-slate-100 py-3.5 z-50 text-slate-705 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-200 animate-fade-in divide-y divide-slate-100/80 dark:divide-zinc-800">
+                  
+                  {/* Section 1: User Profile & Points Status Header */}
+                  <div className="px-4 pb-3">
+                    <span className="text-[9px] font-extrabold text-slate-400 dark:text-zinc-500 tracking-wider block uppercase mb-1.5">
+                      {language === 'en' ? 'Social Identity Profile' : language === 'es' ? 'Perfil de Identidad' : 'Profil d\'Identité'}
+                    </span>
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold bg-gradient-to-tr ${
+                        userRole === 'visitor' 
+                          ? 'from-blue-500 to-sky-500' 
+                          : userRole === 'creator'
+                          ? 'from-indigo-500 to-violet-500'
+                          : 'from-fuchsia-500 to-purple-500'
+                      }`}>
+                        {userRole === 'visitor' ? <User className="w-4 h-4" /> : userRole === 'creator' ? <Briefcase className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
+                      </div>
+                      <div>
+                        <h4 className="font-extrabold text-xs text-slate-800 dark:text-zinc-100 leading-none">
+                          {userRole === 'visitor' ? t.visitor : userRole === 'creator' ? t.creator : t.admin}
+                        </h4>
+                        <span className="text-[10px] text-indigo-500 dark:text-indigo-400 font-bold tracking-wide mt-1 block leading-tight">
+                          {userRole !== 'admin' ? getBadgeName(userPoints) : (language === 'en' ? 'Full Mod Console' : language === 'es' ? 'Consola Completa' : 'Contrôle Modérateur')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+
+
+                  {/* Section 3: Quick Preferences (Theme Switching & Language) */}
+                  <div className="px-4 py-3 space-y-2.5">
+                    <span className="text-[9px] font-extrabold text-slate-400 dark:text-zinc-500 tracking-wider block uppercase">
+                      ⚙️ {language === 'en' ? 'Quick Preferences' : language === 'es' ? 'Preferencias Rápidas' : 'Préférences de Profil'}
+                    </span>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      {/* Theme switcher */}
+                      <button
+                        id="btn-toggle-theme"
+                        onClick={() => setIsDarkMode(!isDarkMode)}
+                        className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl border border-slate-150 text-xs font-semibold hover:bg-slate-50 transition-colors bg-white text-slate-700 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-850 cursor-pointer"
+                        title={language === 'en' ? 'Toggle theme' : language === 'es' ? 'Cambiar tema' : 'Changer de thème'}
+                      >
+                        {isDarkMode ? (
+                          <>
+                            <Sun className="w-3.5 h-3.5 text-amber-500" />
+                            <span>{language === 'en' ? 'Light' : language === 'es' ? 'Claro' : 'Clair'}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Moon className="w-3.5 h-3.5 text-indigo-500 animate-pulse" />
+                            <span>{language === 'en' ? 'Dark' : language === 'es' ? 'Oscuro' : 'Sombre'}</span>
+                          </>
+                        )}
+                      </button>
+
+                      {/* Language selection trigger */}
+                      <div className="relative">
+                        <button
+                          id="btn-language-selector"
+                          onClick={() => setShowLangMenu(!showLangMenu)}
+                          className="w-full flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl border border-slate-150 text-xs font-semibold hover:bg-slate-50 transition-colors bg-white text-slate-700 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-850 cursor-pointer"
+                          title="Language / Idioma"
+                        >
+                          <span className="text-sm leading-none select-none">{languages.find(l => l.code === language)?.flag || '🇫🇷'}</span>
+                          <span className="uppercase font-mono text-[10px] tracking-wide">{language}</span>
+                          <span className="text-[8px] text-slate-400">▼</span>
+                        </button>
+                        
+                        {showLangMenu && (
+                          <div className="absolute top-full right-0 mt-1 w-32 rounded-xl shadow-lg bg-white border border-slate-100 py-1 z-50 text-slate-750 dark:bg-zinc-900 dark:border-zinc-805 dark:text-zinc-200 divide-y divide-slate-50 dark:divide-zinc-800">
+                            {languages.map((lang) => (
+                              <button
+                                key={lang.code}
+                                id={`btn-lang-${lang.code}`}
+                                onClick={() => {
+                                  setLanguage(lang.code);
+                                  setShowLangMenu(false);
+                                }}
+                                className={`flex items-center gap-1.5 w-full px-2.5 py-1.5 text-xs text-left hover:bg-slate-50 dark:hover:bg-zinc-850 cursor-pointer ${language === lang.code ? 'font-bold text-indigo-600 dark:text-indigo-400' : ''}`}
+                              >
+                                <span className="text-xs">{lang.flag}</span>
+                                <span className="font-semibold">{lang.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 4: Auth triggers login/logout */}
+                  <div className="px-3 pt-3.5">
+                    {userRole === 'visitor' ? (
+                      <button
+                        id="btn-login"
+                        onClick={() => {
+                          setAuthModal(true);
+                          setShowProfileMenu(false);
+                        }}
+                        className="w-full py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white shadow-sm transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <User className="w-3.5 h-3.5" />
+                        <span>{language === 'en' ? 'Sign In / Connect' : language === 'es' ? 'Iniciar Sesión' : 'Se connecter'}</span>
+                      </button>
+                    ) : (
+                      <button
+                        id="btn-logout"
+                        onClick={() => {
+                          setUserRole('visitor');
+                          setCurrentTab('home');
+                          setShowProfileMenu(false);
+                        }}
+                        className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 text-red-600 hover:bg-rose-50 rounded-xl text-xs font-bold transition-all dark:text-rose-450 dark:hover:bg-rose-950/20 cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>{language === 'en' ? 'Log Out Account' : language === 'es' ? 'Cerrar mi Cuenta' : 'Déconnecter la Session'}</span>
+                      </button>
+                    )}
+                  </div>
+
+                </div>
+              )}
+            </div>
 
           </div>
         </div>

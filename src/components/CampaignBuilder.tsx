@@ -7,7 +7,8 @@ import {
   Cpu,
   Zap,
   Globe,
-  X
+  X,
+  Shield
 } from 'lucide-react';
 import { Campaign, Platform, RewardType } from '../types';
 
@@ -116,6 +117,8 @@ export default function CampaignBuilder({ onAddCampaign, setCurrentTab }: Campai
   const [targetHandle, setTargetHandle] = useState('');
   const [maxParticipants, setMaxParticipants] = useState('');
   const [expirationDate, setExpirationDate] = useState('2026-12-31');
+  const [emailVerificationEnabled, setEmailVerificationEnabled] = useState(false);
+  const [emailForVerification, setEmailForVerification ] = useState('etsvictoria11@gmail.com');
 
   const handleApplyPreset = (preset: typeof CAMPAIGN_PRESETS[0]) => {
     setSelectedPreset(preset.id);
@@ -161,7 +164,9 @@ export default function CampaignBuilder({ onAddCampaign, setCurrentTab }: Campai
       expirationDate,
       status: 'active',
       createdAt: new Date().toISOString().split('T')[0],
-      pointsReward: 150
+      pointsReward: 150,
+      emailVerificationEnabled,
+      emailForVerification: emailVerificationEnabled ? emailForVerification : undefined
     };
 
     onAddCampaign(newCampaign);
@@ -308,7 +313,7 @@ export default function CampaignBuilder({ onAddCampaign, setCurrentTab }: Campai
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-750 dark:text-zinc-350">
+                <label className="text-xs font-bold text-gray-700 dark:text-zinc-300">
                   Titre public de la campagne *
                 </label>
                 <div className="flex gap-2">
@@ -333,7 +338,7 @@ export default function CampaignBuilder({ onAddCampaign, setCurrentTab }: Campai
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-750 dark:text-zinc-350">
+                <label className="text-xs font-bold text-gray-700 dark:text-zinc-300">
                   Description / Explication du cadeau
                 </label>
                 <input
@@ -348,7 +353,7 @@ export default function CampaignBuilder({ onAddCampaign, setCurrentTab }: Campai
 
             {/* Cover Images Selector */}
             <div className="space-y-2 pt-2">
-              <label className="text-xs font-bold text-gray-750 dark:text-zinc-350 flex items-center gap-1">
+              <label className="text-xs font-bold text-gray-700 dark:text-zinc-300 flex items-center gap-1">
                 <ImageIcon className="w-3.5 h-3.5 text-blue-500" /> Image de couverture de page
               </label>
               <div className="flex flex-wrap gap-3 items-center">
@@ -390,7 +395,7 @@ export default function CampaignBuilder({ onAddCampaign, setCurrentTab }: Campai
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-750 dark:text-zinc-350">Réseau Social Cible</label>
+                <label className="text-xs font-bold text-gray-700 dark:text-zinc-300">Réseau Social Cible</label>
                 <select
                   value={platform}
                   onChange={(e) => {
@@ -401,7 +406,7 @@ export default function CampaignBuilder({ onAddCampaign, setCurrentTab }: Campai
                     else if (val === 'telegram') setActionType('join_channel');
                     else setActionType('follow');
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-slate-50 border-slate-205 dark:bg-zinc-950 dark:border-zinc-850"
+                  className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-slate-50 border-slate-200 dark:bg-zinc-950 dark:border-zinc-850"
                 >
                   <option value="tiktok">TikTok</option>
                   <option value="youtube">YouTube</option>
@@ -414,11 +419,11 @@ export default function CampaignBuilder({ onAddCampaign, setCurrentTab }: Campai
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-750 dark:text-zinc-350">Action Requise</label>
+                <label className="text-xs font-bold text-gray-700 dark:text-zinc-300">Action Requise</label>
                 <select
                   value={actionType}
                   onChange={(e) => setActionType(e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-slate-50 border-slate-205 dark:bg-zinc-950 dark:border-zinc-850"
+                  className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-slate-50 border-slate-200 dark:bg-zinc-950 dark:border-zinc-850"
                 >
                   {platform === 'youtube' ? (
                     <option value="subscribe">S’abonner à la chaine</option>
@@ -439,20 +444,20 @@ export default function CampaignBuilder({ onAddCampaign, setCurrentTab }: Campai
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-750 dark:text-zinc-350">Votre pseudo / nom d'affichage</label>
+                <label className="text-xs font-bold text-gray-700 dark:text-zinc-300">Votre pseudo / nom d'affichage</label>
                 <input
                   type="text"
                   placeholder="Ex: @thomas_crea ou Thomas Letellier"
                   value={targetHandle}
                   onChange={(e) => setTargetHandle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-slate-50 border-slate-200 dark:bg-zinc-950 dark:border-zinc-855"
+                  className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-slate-50 border-slate-200 dark:bg-zinc-950 dark:border-zinc-850"
                 />
               </div>
 
             </div>
 
             <div className="space-y-1 pt-1">
-              <label className="text-xs font-bold text-gray-750 dark:text-zinc-350 flex items-center gap-1">
+              <label className="text-xs font-bold text-gray-700 dark:text-zinc-300 flex items-center gap-1">
                 <Globe className="w-3.5 h-3.5 text-blue-500" /> URL complète de redirection (Profil / Publication) *
               </label>
               <input
@@ -479,7 +484,7 @@ export default function CampaignBuilder({ onAddCampaign, setCurrentTab }: Campai
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-750 dark:text-zinc-350">Catégorie de récompense</label>
+                <label className="text-xs font-bold text-gray-700 dark:text-zinc-300">Catégorie de récompense</label>
                 <select
                   value={rewardType}
                   onChange={(e) => setRewardType(e.target.value as RewardType)}
@@ -500,7 +505,7 @@ export default function CampaignBuilder({ onAddCampaign, setCurrentTab }: Campai
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-750 dark:text-zinc-350">Nom exact du Bonus *</label>
+                <label className="text-xs font-bold text-gray-700 dark:text-zinc-300">Nom exact du Bonus *</label>
                 <input
                   type="text"
                   required
@@ -512,7 +517,7 @@ export default function CampaignBuilder({ onAddCampaign, setCurrentTab }: Campai
               </div>
 
               <div className="md:col-span-2 space-y-1">
-                <label className="text-xs font-bold text-gray-750 dark:text-zinc-350">
+                <label className="text-xs font-bold text-gray-700 dark:text-zinc-300">
                   Lien public de téléchargement / Redirection d'accès secret *
                 </label>
                 <input
@@ -571,6 +576,58 @@ export default function CampaignBuilder({ onAddCampaign, setCurrentTab }: Campai
                   Notre passerelle de rachat intègre des contrôles IP avancés pour bloquer les robots de rachat et les fausses soumissions d'images.
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Section 5: Security option */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-gray-800 dark:text-zinc-200 border-b pb-2 flex items-center gap-1.5 border-slate-150 dark:border-zinc-800">
+              <span className="w-5 h-5 bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-400 rounded-full flex items-center justify-center text-[10px] font-bold">5</span>
+              Sécurité & Protection de la Campagne
+            </h3>
+
+            <div className="p-5 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-2xl space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <span className="font-bold text-gray-850 dark:text-zinc-200 text-xs block">Double Validation de Sécurité par Email (2FA)</span>
+                  <p className="text-[11px] text-gray-500 dark:text-zinc-400 leading-snug">
+                    Recommandé pour protéger vos liens secrets de récompense. Si vous l'activez, toute modification ultérieure des paramètres sensibles (comme le lien d'accès bonus ou l'URL du réseau social) nécessitera un code d'authentification unique envoyé par e-mail.
+                  </p>
+                </div>
+                
+                {/* Custom Toggle Switch */}
+                <button
+                  id="security-setup-toggle"
+                  type="button"
+                  onClick={() => setEmailVerificationEnabled(!emailVerificationEnabled)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${emailVerificationEnabled ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-zinc-800'}`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${emailVerificationEnabled ? 'translate-x-5' : 'translate-x-0'}`}
+                  />
+                </button>
+              </div>
+
+              {emailVerificationEnabled && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-150 dark:border-zinc-900 animate-fade-in">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-700 dark:text-zinc-300 flex items-center gap-1">
+                      <Shield className="w-3.5 h-3.5 text-indigo-500 animate-pulse" /> Adresse email de sécurité *
+                    </label>
+                    <input
+                      type="email"
+                      required={emailVerificationEnabled}
+                      placeholder="createur@studio_growth.com"
+                      value={emailForVerification}
+                      onChange={(e) => setEmailForVerification(e.target.value)}
+                      className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border text-xs text-slate-800 dark:text-zinc-200 rounded-lg outline-none font-mono tracking-wide"
+                    />
+                    <p className="text-[9px] text-gray-400">
+                      Les codes de vérification à usage unique y seront envoyés de manière sécurisée.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

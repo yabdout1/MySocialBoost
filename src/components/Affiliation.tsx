@@ -53,7 +53,7 @@ export default function Affiliation() {
             Gagnez 30% de commission récurrente à vie
           </h2>
           <p className="text-xs sm:text-sm text-indigo-100 italic">
-            Partagez SocialBoost à d’autres créateurs, agences ou boutiques Shopify. Chaque abonnement souscrit par vôtres filleuls vous rapporte de l'argent chaque mois.
+            Partagez SocialBoost à d’autres créateurs, agences ou boutiques Shopify. Chaque abonnement souscrit par vos filleuls vous rapporte de l'argent chaque mois.
           </p>
         </div>
       </div>
@@ -151,7 +151,7 @@ export default function Affiliation() {
             {/* Range slider input */}
             <div className="space-y-2.5">
               <div className="flex justify-between font-bold">
-                <span className="text-gray-700 dark:text-zinc-350">Filleuls abonnés référés :</span>
+                <span className="text-gray-700 dark:text-zinc-300">Filleuls abonnés référés :</span>
                 <span className="text-indigo-600 font-mono text-sm">{estimateReferred} créateurs actifs</span>
               </div>
               <input
@@ -167,7 +167,7 @@ export default function Affiliation() {
 
             {/* Plan tier selector */}
             <div className="space-y-1.5 pb-2">
-              <label className="font-bold text-gray-750 dark:text-zinc-350">Formule souscrite par vos prospects référencés :</label>
+              <label className="font-bold text-gray-700 dark:text-zinc-300">Formule souscrite par vos prospects référencés :</label>
               <div className="grid grid-cols-3 gap-3">
                 <button
                   type="button"
@@ -175,7 +175,7 @@ export default function Affiliation() {
                   className={`py-2 px-2.5 rounded-lg border text-center transition-all ${
                     estimatePlan === 'starter' 
                       ? 'bg-indigo-50 border-indigo-300 text-indigo-700 dark:bg-indigo-950/40' 
-                      : 'border-slate-150 text-slate-500 bg-transparent hover:bg-slate-50'
+                      : 'border-slate-200 text-slate-500 bg-transparent hover:bg-slate-50'
                   }`}
                 >
                   Starter (€19.50)

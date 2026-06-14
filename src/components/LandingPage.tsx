@@ -14,9 +14,12 @@ import {
   Star,
   Award,
   BookOpen,
-  MessageSquare
+  MessageSquare,
+  Globe,
+  Plus
 } from 'lucide-react';
 import { TESTIMONIALS, FAQS } from '../mockData';
+import { useLanguage } from '../context/LanguageContext';
 
 interface LandingPageProps {
   setCurrentTab: (tab: string) => void;
@@ -27,40 +30,41 @@ interface LandingPageProps {
 export default function LandingPage({ setCurrentTab, setUserRole, setAuthModal }: LandingPageProps) {
   const [activeFaq, setActiveFaq] = useState<string | null>(null);
   const [demoStep, setDemoStep] = useState<number>(0);
+  const { t, language } = useLanguage();
 
   const stats = [
-    { label: 'Campagnes Lancées', value: '14 291', icon: Zap, color: 'text-blue-600 dark:text-blue-400' },
-    { label: 'Actions d\'engagement', value: '1 489 202', icon: Users, color: 'text-violet-600 dark:text-violet-400' },
-    { label: 'Récompenses débloquées', value: '849 521', icon: Gift, color: 'text-emerald-600 dark:text-emerald-400' },
-    { label: 'Fiabilité de l\'IA', value: '99.4%', icon: Cpu, color: 'text-amber-500' }
+    { label: t.statCampaigns, value: '14 291', icon: Zap, color: 'text-indigo-400' },
+    { label: t.statEngagement, value: '1 489 202', icon: Users, color: 'text-pink-400' },
+    { label: t.statRewards, value: '849 521', icon: Gift, color: 'text-emerald-400' },
+    { label: t.statAiAccuracy, value: '99.4%', icon: Cpu, color: 'text-amber-400' }
   ];
 
   const demoSteps = [
     {
-      title: "1. Créez votre cadeau",
-      desc: "Téléchargez un ebook, intégrez un lien Notion ou donnez accès à un groupe privé. Offrez de la valeur solide.",
-      detail: "Vous déterminez les règles d’accès (ex: réservé aux 500 premiers).",
+      title: t.step1Title,
+      desc: t.step1Desc,
+      detail: t.step1Detail,
       icon: Gift,
       color: "from-blue-500 to-indigo-500"
     },
     {
-      title: "2. Choisissez les actions",
-      desc: "Sélectionnez vos besoins de croissance : s'abonner sur TikTok, relayer un post X, rejoindre un canal Telegram, etc.",
-      detail: "Vous pouvez combiner plusieurs réseaux sociaux pour une seule récompense.",
+      title: t.step2Title,
+      desc: t.step2Desc,
+      detail: t.step2Detail,
       icon: TrendingUp,
       color: "from-indigo-500 to-purple-500"
     },
     {
-      title: "3. Partagez le lien d'accès",
-      desc: "SocialBoost génère une page de capture magnifique avec un QR code à partager en bio ou dans vos publications.",
-      detail: "Optimisé à 100% pour les smartphones des vôtres abonnés.",
+      title: t.step3Title,
+      desc: t.step3Desc,
+      detail: t.step3Detail,
       icon: Sparkles,
       color: "from-purple-500 to-pink-500"
     },
     {
-      title: "4. L'IA valide et livre le bonus",
-      desc: "Notre IA de vision artificielle analyse instantanément les captures des abonnés pour débloquer le téléchargement.",
-      detail: "Zéro travail manuel, croissance organique en pilote automatique garanti !",
+      title: t.step4Title,
+      desc: t.step4Desc,
+      detail: t.step4Detail,
       icon: Cpu,
       color: "from-pink-500 to-rose-500"
     }
@@ -76,82 +80,180 @@ export default function LandingPage({ setCurrentTab, setUserRole, setAuthModal }
   };
 
   return (
-    <div className="bg-slate-50/50 dark:bg-zinc-950 transition-colors duration-200">
+    <div className="bg-slate-900 dark:bg-zinc-950 text-white min-h-screen transition-colors duration-200 selection:bg-indigo-500 selection:text-white">
       
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 px-4 sm:px-6 lg:px-8 text-center max-w-7xl mx-auto">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-blue-500/10 to-violet-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      {/* 🚀 Reference Image 1 & 2 Style Premium Hero Section */}
+      <section className="relative overflow-hidden pt-12 pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-indigo-600/10 dark:bg-indigo-500/5 rounded-full blur-[140px] pointer-events-none"></div>
+        <div className="absolute top-20 right-10 w-[300px] h-[300px] bg-pink-500/10 rounded-full blur-[100px] pointer-events-none"></div>
         
-        {/* Slogan Pill */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold mb-8 animate-fade-in">
-          <Zap className="w-3.5 h-3.5 text-amber-500 animate-bounce" />
-          <span>Nouveau : Analyse des screenshots instantanée par IA v2.8</span>
-        </div>
-
-        {/* Heading */}
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-[1.1] mb-6 font-sans">
-          Développez votre audience grâce à{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-500 dark:from-blue-400 dark:to-violet-400">
-            la valeur que vous offrez.
-          </span>
-        </h1>
-
-        {/* Description */}
-        <p className="text-lg text-slate-600 dark:text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Publiez des récompenses numériques (Ebooks, Prompts IA, Templates Canva, Codes réduc) débloquées par des actions sociales concrètes sur vos réseaux préférés.
-        </p>
-
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
-          <button
-            id="hero-cta-get-started"
-            onClick={startAsCreator}
-            className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:opacity-95 text-white shadow-lg shadow-blue-500/20 transform hover:-translate-y-0.5 transition-all gap-2"
-          >
-            Lancer ma première campagne
-            <ArrowRight className="w-4 h-4" />
-          </button>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
-          <button
-            id="hero-cta-marketplace"
-            onClick={() => setCurrentTab('marketplace')}
-            className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 rounded-xl text-sm font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-850 transition-colors gap-2"
-          >
-            Soutenir et Gagner des Cadeaux
-            <BookOpen className="w-4 h-4" />
-          </button>
+          {/* Hero Left Content: Heavy Typographic Display List (Match Image 1 layout) */}
+          <div className="lg:col-span-6 space-y-8 text-left z-10">
+            
+            {/* Slogan Pill */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-950/65 border border-indigo-500/30 text-indigo-300 text-xs font-bold font-mono tracking-wide">
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+              </span>
+              <span>{t.heroSlogan}</span>
+            </div>
+
+            {/* Slogans Title */}
+            <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-[1.05] font-sans">
+              {language === 'fr' ? (
+                <>Essayez ces <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 font-extrabold">{t.heroTitleGradient}</span> pour booster votre trafic !</>
+              ) : language === 'es' ? (
+                <>¡Prueba estas <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 font-extrabold">3 tácticas rápidas</span> para explotar tu tráfico!</>
+              ) : (
+                <>Try these <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 font-extrabold">3 quick tactics</span> to explode your traffic!</>
+              )}
+            </h1>
+
+            <p className="text-slate-350 text-base max-w-xl leading-relaxed">
+              {t.heroSub}
+            </p>
+
+            {/* Quick structured tactics layout (Direct matching reference style Image 1) */}
+            <div className="space-y-4 pt-2 font-sans border-l-2 border-indigo-500/40 pl-5">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-indigo-300 font-bold text-sm">
+                  <Plus className="w-4 h-4 text-cyan-400" />
+                  <span>{t.tactic1Title}</span>
+                </div>
+                <p className="text-xs text-slate-400 ml-6">
+                  {t.tactic1Desc}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-indigo-300 font-bold text-sm">
+                  <Plus className="w-4 h-4 text-pink-400" />
+                  <span>{t.tactic2Title}</span>
+                </div>
+                <p className="text-xs text-slate-400 ml-6">
+                  {t.tactic2Desc}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-indigo-300 font-bold text-sm">
+                  <Plus className="w-4 h-4 text-purple-400" />
+                  <span>{t.tactic3Title}</span>
+                </div>
+                <p className="text-xs text-slate-400 ml-6">
+                  {t.tactic3Desc}
+                </p>
+              </div>
+            </div>
+
+            {/* Micro branding footer (Reference Style footer row) */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
+              <button
+                id="hero-cta-get-started-v2"
+                onClick={startAsCreator}
+                className="inline-flex items-center justify-center px-8 py-4 rounded-xl text-sm font-black bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:opacity-95 text-white shadow-xl shadow-indigo-500/10 transform active:scale-[0.98] transition-all gap-2 cursor-pointer"
+              >
+                {t.heroCtaStart}
+                <ArrowRight className="w-4 h-4 text-indigo-200" />
+              </button>
+              
+              <button
+                id="hero-cta-marketplace-v2"
+                onClick={() => setCurrentTab('marketplace')}
+                className="inline-flex items-center justify-center px-6 py-4 rounded-xl text-sm font-bold bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-slate-700/60 transition-colors gap-2 cursor-pointer"
+              >
+                {t.heroCtaBrowse}
+                <BookOpen className="w-4 h-4 text-slate-400" />
+              </button>
+            </div>
+
+            {/* Support channels */}
+            <div className="flex items-center gap-4 text-xs text-slate-400 pt-1 font-mono">
+              <span>{t.freeTrialOffer}</span>
+              <span>•</span>
+              <span className="text-indigo-400">{t.certifiedGrowth}</span>
+            </div>
+
+          </div>
+
+          {/* Hero Right: 3D Astronaut Riding Rocket Graphic with overlay floating glassmorphic widgets (Image 1 & Comic elements) */}
+          <div className="lg:col-span-6 flex items-center justify-center relative">
+            
+            {/* Visual Neon Tube Background Ring */}
+            <div className="absolute w-[360px] sm:w-[500px] h-[360px] sm:h-[500px] rounded-full border-8 border-indigo-600/10 border-t-indigo-500/25 border-r-pink-500/25 animate-spin [animation-duration:40s] pointer-events-none"></div>
+            
+            <div className="relative max-w-md sm:max-w-lg z-10 group">
+              {/* Main astronaut image generated to match request 1 */}
+              <img 
+                src="/src/assets/images/hero_astronaut_rocket_1780731074640.png" 
+                alt="Astronaute SocialBoost sur sa fusée"
+                referrerPolicy="no-referrer"
+                className="w-full h-auto drop-shadow-[0_20px_50px_rgba(79,110,229,0.35)] rounded-3xl object-cover transform group-hover:scale-105 transition-all duration-700"
+              />
+
+              {/* Floating Glassmorphic Badge 1 */}
+              <div className="absolute top-10 -left-6 bg-slate-900/80 backdrop-blur-md p-3.5 rounded-2xl border border-indigo-500/30 shadow-2xl flex items-center gap-3 animate-bounce [animation-duration:4s]">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-500 flex items-center justify-center text-white">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-indigo-300 font-mono">Gain Moyen</p>
+                  <p className="text-sm font-black text-white">+ 480 abonnés / jour</p>
+                </div>
+              </div>
+
+              {/* Floating Glassmorphic Badge 2 */}
+              <div className="absolute bottom-12 -right-6 bg-slate-900/80 backdrop-blur-md px-4 py-3.5 rounded-2xl border border-pink-500/30 shadow-2xl space-y-1 text-left animate-bounce [animation-duration:5.5s]">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-pink-400">
+                  <Cpu className="w-3.5 h-3.5 text-pink-400 animate-pulse" />
+                  <span>Vision IA</span>
+                </div>
+                <p className="text-[11px] text-slate-300 font-medium">99.4% de taux de détection</p>
+              </div>
+
+              {/* Neon bottom platform bar resembling game store showcase layout */}
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-[85%] h-5 bg-indigo-500/20 blur-xl"></div>
+            </div>
+
+          </div>
+
         </div>
 
-        {/* Social Badges Grid */}
-        <div className="mt-16 pt-8 border-t border-slate-100 dark:border-zinc-900">
-          <p className="text-[11px] font-mono tracking-widest text-slate-400 dark:text-zinc-500 uppercase mb-5">
-            CROISSANCE INTÉGRÉE POUR TOUTES LES PLATEFORMES
+        {/* Brand Integration Grid Floor */}
+        <div className="mt-20 pt-8 border-t border-slate-800/80 text-center">
+          <p className="text-[10px] font-mono tracking-widest text-slate-450 uppercase mb-6">
+            {t.brandTicker}
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-12 opacity-85">
+          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-14 opacity-80">
             {['TikTok', 'YouTube', 'Instagram', 'Twitter / X', 'Telegram', 'Facebook', 'LinkedIn'].map((plat, idx) => (
-              <span key={idx} className="text-sm font-semibold text-slate-500 dark:text-zinc-400 font-sans hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                {plat}
+              <span key={idx} className="text-xs font-black tracking-wider text-slate-400 hover:text-cyan-400 font-sans cursor-pointer transition-colors duration-200">
+                #{plat.toUpperCase()}
               </span>
             ))}
           </div>
         </div>
+
       </section>
 
-      {/* Real-time Ticker Statistics */}
-      <section className="bg-white dark:bg-zinc-950 py-10 border-y border-slate-150 dark:border-zinc-900 transition-colors">
+      {/* 📊 Real-time Ticker Statistics with Neon Highlight Borders */}
+      <section className="bg-slate-950 py-12 border-y border-slate-800/60 relative">
+        <div className="absolute inset-0 bg-blue-500/[0.01] pointer-events-none"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, idx) => {
               const IconComp = stat.icon;
               return (
-                <div key={idx} className="text-center space-y-2 p-4 rounded-xl hover:bg-slate-50/50 dark:hover:bg-zinc-900/30 transition-colors">
-                  <div className="inline-flex items-center justify-center p-2.5 bg-blue-50/50 dark:bg-zinc-900 rounded-xl mb-1">
+                <div key={idx} className="text-center space-y-2 p-5 rounded-2xl bg-slate-900/50 hover:bg-slate-900 border border-slate-800/40 hover:border-indigo-500/30 transition-all duration-300">
+                  <div className="inline-flex items-center justify-center p-2.5 bg-indigo-950/40 rounded-xl mb-1 border border-indigo-500/10">
                     <IconComp className={`w-5 h-5 ${stat.color}`} />
                   </div>
-                  <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 font-mono tracking-tight">
+                  <h3 className="text-2xl sm:text-3.5xl font-black text-white font-mono tracking-tight leading-none">
                     {stat.value}
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                  <p className="text-[11.5px] text-slate-400 font-semibold uppercase tracking-wider font-mono">
                     {stat.label}
                   </p>
                 </div>
@@ -161,20 +263,23 @@ export default function LandingPage({ setCurrentTab, setUserRole, setAuthModal }
         </div>
       </section>
 
-      {/* Interactive Demo Presentation Selector */}
-      <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
-            Comment fonctionne SocialBoost ?
+      {/* ⚙️ Interactive Demo Section (Uses newly generated image 2 for dashboard preview) */}
+      <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-3xl mx-auto mb-20 space-y-3">
+          <div className="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-violet-950/40 border border-violet-500/30 text-violet-300">
+            {t.demoPill}
+          </div>
+          <h2 className="text-3xl sm:text-4.5xl font-extrabold text-white tracking-tight">
+            {t.demoTitle}
           </h2>
-          <p className="text-slate-600 dark:text-zinc-400 text-base">
-            Oubliez les processus manuels fastidieux de vérification. Notre solution est entièrement automatisée.
+          <p className="text-slate-400 text-sm max-w-xl mx-auto">
+            {t.demoSub}
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
-          {/* Step Selector Tab Panels (Left) */}
+          {/* Left Step Selectors (Glow interactive accordion cards) */}
           <div className="lg:col-span-5 space-y-4">
             {demoSteps.map((step, idx) => {
               const IconC = step.icon;
@@ -183,21 +288,21 @@ export default function LandingPage({ setCurrentTab, setUserRole, setAuthModal }
                 <div
                   key={idx}
                   onClick={() => setDemoStep(idx)}
-                  className={`p-5 rounded-2xl border text-left cursor-pointer transition-all duration-350 ${
+                  className={`p-5 rounded-2xl text-left cursor-pointer transition-all duration-350 border ${
                     isActive 
-                      ? 'border-indigo-200 bg-white shadow-md shadow-indigo-100 dark:border-zinc-805 dark:bg-zinc-900' 
-                      : 'border-transparent bg-transparent hover:bg-white/40 dark:hover:bg-zinc-900/20'
+                      ? 'border-indigo-500/60 bg-indigo-950/40 shadow-xl shadow-indigo-500/10' 
+                      : 'border-slate-800/40 bg-slate-900/20 hover:bg-slate-900/50'
                   }`}
                 >
                   <div className="flex gap-4">
-                    <div className={`flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr ${step.color} text-white shrink-0`}>
+                    <div className={`flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr ${step.color} text-white shrink-0 shadow-lg`}>
                       <IconC className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className={`text-base font-bold ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-800 dark:text-zinc-350'}`}>
+                      <h4 className={`text-sm font-bold ${isActive ? 'text-indigo-350' : 'text-slate-300'}`}>
                         {step.title}
                       </h4>
-                      <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 line-clamp-2">
+                      <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                         {step.desc}
                       </p>
                     </div>
@@ -207,116 +312,136 @@ export default function LandingPage({ setCurrentTab, setUserRole, setAuthModal }
             })}
           </div>
 
-          {/* Graphical Simulated Sandbox (Right) */}
-          <div className="lg:col-span-7 bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-slate-100 dark:border-zinc-800 shadow-xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-600 to-violet-500"></div>
+          {/* Right Simulated Computer Mockup featuring our second newly generated campaign glow dashboard card (Match reference image 5) */}
+          <div className="lg:col-span-7 bg-slate-950 rounded-3xl p-6 sm:p-8 border border-slate-800 relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-400 to-indigo-500"></div>
             
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100 dark:border-zinc-800">
-              <div className="flex items-center gap-1.5 text-xs text-slate-400 font-mono">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800/60">
+              <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                <span className="ml-2 font-semibold">SOCIALBOOST_SIMULATOR_ENV v1.2</span>
+                <span className="ml-2 font-semibold">SOCIALBOOST_AI_DASHBOARD v2.8</span>
               </div>
-              <span className="text-[10px] font-bold px-2 py-1 rounded bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300 uppercase tracking-widest">
-                Étape Active
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-indigo-950/60 text-indigo-305 border border-indigo-500/20 uppercase tracking-widest">
+                {language === 'es' ? 'Paso Activo' : language === 'en' ? 'Active Step' : 'Étape Active'}
               </span>
             </div>
 
-            {/* Simulated UI Content */}
-            <div className="bg-slate-50 dark:bg-zinc-950 p-6 rounded-2xl border border-slate-150 dark:border-zinc-850 relative min-h-[220px] flex flex-col justify-between">
+            {/* Neon Glowing Workspace with our generated Dashboard Mockup (Matching Style 4 & 5) */}
+            <div className="relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 flex flex-col justify-between min-h-[350px]">
               
-              {demoStep === 0 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-blue-600 uppercase font-bold">1. Créateur</span>
-                    <span className="text-xs text-slate-400 font-medium">Nouveau Cadeau</span>
+              {/* Overlay Interactive Mockup State card on top of background image */}
+              <div className="absolute inset-0 opacity-40 mix-blend-screen pointer-events-none">
+                <img 
+                  src="/src/assets/images/campaign_glow_dashboard_1780731093436.png" 
+                  alt="Analyse de données et vision artificielle" 
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              {/* Live interactive wizard elements overlay */}
+              <div className="relative p-6 z-10 bg-slate-950/85 backdrop-blur-sm m-4 rounded-xl border border-slate-800 flex-1 flex flex-col justify-between">
+                
+                {demoStep === 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-800/50 pb-2">
+                      <span className="text-[10px] font-mono text-cyan-400 uppercase font-bold">{t.giftCreationTitle}</span>
+                      <span className="text-xs text-slate-400 font-mono font-bold">{t.giftFormat}</span>
+                    </div>
+                    <h3 className="text-base font-bold text-white flex items-center gap-2">
+                      <Gift className="w-5 h-5 text-indigo-400" />
+                      🚀 {language === 'en' ? 'Ultimate Prompt Engineering Book' : 'Manuel Ultime de Prompts ChatGPT'} (6.4 MB)
+                    </h3>
+                    <div className="p-3.5 bg-slate-900 rounded-xl border border-dashed border-indigo-500/30">
+                      <p className="text-xs text-slate-450 leading-relaxed">
+                        {t.giftDesc}
+                      </p>
+                    </div>
+                    <p className="text-[10px] text-cyan-400 font-semibold italic">{t.readyToAttach}</p>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-850 dark:text-white">🚀 Manuel Ultime de Prompts ChatGPT</h3>
-                  <div className="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-dashed border-indigo-200">
-                    <p className="text-xs text-slate-500 dark:text-zinc-400">
-                      Un PDF hébergé qui contient 40 prompts optimisés pour le commerce électronique et la rédaction web.
+                )}
+
+                {demoStep === 1 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-800/50 pb-2">
+                      <span className="text-[10px] font-mono text-indigo-400 uppercase font-bold">{t.engagementRules}</span>
+                      <span className="text-xs text-slate-400 font-mono font-bold">{t.socialBooster}</span>
+                    </div>
+                    
+                    <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-950 text-white flex items-center justify-center text-xs font-black font-mono border border-indigo-500/20">
+                          т
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-white">{t.rulesAction}</p>
+                          <p className="text-[10px] text-slate-500 font-mono font-medium">@julien_growth_dev</p>
+                        </div>
+                      </div>
+                      <span className="text-xs px-2.5 py-1 rounded bg-indigo-950 text-indigo-305 border border-indigo-500/20 font-mono font-bold">{t.rulesBonus}</span>
+                    </div>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      {t.rulesDesc}
                     </p>
                   </div>
-                  <p className="text-[11px] text-indigo-500 italic">Prêt à attacher à une contrepartie d'engagement d'abonnement.</p>
-                </div>
-              )}
+                )}
 
-              {demoStep === 1 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-purple-600 uppercase font-bold">2. Règles d'engagement</span>
-                    <span className="text-xs text-slate-400">TikTok Growth</span>
-                  </div>
-                  <div className="p-4 bg-white dark:bg-zinc-900 rounded-xl border border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold font-mono">
-                        т
+                {demoStep === 2 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-800/50 pb-2">
+                       <span className="text-[10px] font-mono text-pink-400 uppercase font-bold">{t.captureTitle}</span>
+                       <span className="text-xs text-slate-400 font-mono font-bold">{language === 'en' ? 'Link Generated' : 'Lien Généré'}</span>
+                    </div>
+                    <div className="p-4 bg-slate-905 rounded-xl border border-slate-800 text-center space-y-3">
+                      <p className="text-xs font-bold text-slate-200">{t.captureReady}</p>
+                      <div className="px-3 py-2 bg-slate-950 rounded text-[11px] font-mono text-cyan-400 select-all border border-slate-800 overflow-x-auto whitespace-nowrap text-left">
+                        https://socialboost.app/c/pack-chatgpt-julien
                       </div>
+                    </div>
+                    <p className="text-xs text-slate-450 leading-relaxed">
+                      {t.captureDesc}
+                    </p>
+                  </div>
+                )}
+
+                {demoStep === 3 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-800/50 pb-2">
+                      <span className="text-[10px] font-mono text-emerald-400 uppercase font-bold">{t.automatedUnlock}</span>
+                      <span className="text-xs text-slate-400 font-mono font-bold">{language === 'es' ? 'Verificación de Prueba' : language === 'en' ? 'Proof Verification' : 'Vérification de Preuve'}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 p-3.5 bg-emerald-950/25 border border-emerald-500/20 rounded-xl">
+                      <Check className="w-5 h-5 text-emerald-400 shrink-0" />
                       <div>
-                        <p className="text-xs font-bold text-slate-800 dark:text-zinc-200">Suivre mon compte TikTok</p>
-                        <p className="text-[10px] text-slate-400">Handle cible: @julien_growth_dev</p>
+                        <p className="text-xs font-bold text-white">{t.proofCertified}</p>
+                        <p className="text-[10.5px] text-slate-450">{t.proofDetail}</p>
                       </div>
                     </div>
-                    <span className="text-xs px-2.5 py-1 rounded bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-300 font-mono font-bold">+ 150 pts</span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-zinc-400">
-                    L'abonné devra s'abonner pour pouvoir valider l'obtention du PDF.
-                  </p>
-                </div>
-              )}
 
-              {demoStep === 2 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-pink-600 uppercase font-bold">3. Page de Téléchargement</span>
-                    <span className="text-xs text-slate-400">Lien Généré</span>
+                    <button className="w-full py-3 rounded-xl text-xs font-bold bg-green-600 hover:bg-green-700 text-white shadow-sm flex items-center justify-center gap-1.5 transition-all">
+                      <Gift className="w-4 h-4 animate-bounce" />
+                      {t.downloadGift}
+                    </button>
                   </div>
-                  <div className="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-slate-100 text-center space-y-2">
-                    <p className="text-xs font-semibold text-slate-700 dark:text-zinc-300">🎉 Page de capture optimisée mobile</p>
-                    <div className="px-3 py-1.5 bg-slate-50 dark:bg-zinc-950 rounded text-[11px] font-mono text-slate-500 select-all border text-left overflow-x-auto whitespace-nowrap">
-                      https://socialboost.app/c/pack-chatgpt-julien
-                    </div>
-                  </div>
-                  <div className="flex justify-center">
-                    <span className="text-xs text-indigo-500 underline cursor-pointer hover:text-indigo-600">Simuler la page de capture en situation réelle</span>
-                  </div>
-                </div>
-              )}
+                )}
 
-              {demoStep === 3 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-emerald-500 uppercase font-bold">4. Déblocage Automatisé IA</span>
-                    <span className="text-xs text-slate-400">Vérification de Preuve</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 p-3 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
-                    <Check className="w-5 h-5 text-emerald-500 shrink-0" />
-                    <div>
-                      <p className="text-xs font-bold text-slate-800 dark:text-zinc-200">Preuve Certifiée par Vision SocialBoost IA !</p>
-                      <p className="text-[10px] text-slate-500 dark:text-zinc-400">Le bouton d'abonnement a bien été identifié sur l'image.</p>
-                    </div>
-                  </div>
-
-                  <button className="w-full py-2.5 rounded-xl text-xs font-bold bg-green-600 hover:bg-green-700 text-white shadow-sm flex items-center justify-center gap-1.5 transition-all">
-                    <Gift className="w-4 h-4 animate-bounce" />
-                    Télécharger "Manuel Ultime de Prompts" (6.4 MB)
-                  </button>
-                </div>
-              )}
+              </div>
 
             </div>
 
+            {/* Simulated bar text */}
             <div className="mt-6 flex justify-between items-center text-xs">
-              <span className="text-slate-400 leading-none">
-                Étape {demoStep + 1} de {demoSteps.length} — {demoSteps[demoStep].detail}
+              <span className="text-slate-500 font-medium font-mono">
+                {language === 'es' ? 'Paso' : language === 'en' ? 'Step' : 'Étape'} {demoStep + 1} {language === 'es' ? 'de' : 'of'} {demoSteps.length} — {demoSteps[demoStep].detail}
               </span>
               <button 
                 onClick={() => setDemoStep((demoStep + 1) % demoSteps.length)}
-                className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 font-bold flex items-center gap-1.5 transition-colors"
+                className="text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
               >
-                Étape Suivante <ArrowRight className="w-3.5 h-3.5" />
+                {t.demoNextStep} <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -324,51 +449,51 @@ export default function LandingPage({ setCurrentTab, setUserRole, setAuthModal }
         </div>
       </section>
 
-      {/* Elegant Bento Feature Pitch Grid */}
-      <section className="bg-white dark:bg-zinc-950 py-20 border-t border-slate-100 dark:border-zinc-900 transition-colors">
+      {/* 🔮 Elegant Bento Feature Pitch Grid with glowing corners */}
+      <section className="bg-slate-950 py-24 border-t border-slate-800/50 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="text-xs font-extrabold text-blue-600 uppercase tracking-widest">PROPULSÉ POUR LE SAAS</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mt-2 mb-4">
-              Bâtissez l'audience de vos rêves
+          <div className="text-center max-w-3xl mx-auto mb-20 space-y-3">
+            <span className="text-xs font-extrabold text-indigo-400 uppercase tracking-widest">{t.landingBentoSecurity}</span>
+            <h2 className="text-3xl sm:text-4.5xl font-extrabold text-white tracking-tight">
+              {t.landingBentoAudience}
             </h2>
-            <p className="text-slate-600 dark:text-zinc-400 text-sm">
-              Donnez vie à vos campagnes avec des fonctionnalités conçues pour l'efficacité et la sécurité.
+            <p className="text-slate-400 text-sm">
+              {t.landingBentoAudienceSub}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             
             {/* Box 1 */}
-            <div className="p-6 rounded-2xl border border-slate-100 dark:border-zinc-850 dark:bg-zinc-900 space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-zinc-950 flex items-center justify-center text-blue-600">
-                <Cpu className="w-5 h-5" />
+            <div className="p-8 rounded-2xl border border-slate-800 bg-slate-900/60 hover:bg-slate-900 hover:border-indigo-500/30 transition-all duration-300 space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-center text-cyan-400 shadow-inner">
+                <Cpu className="w-5 h-5 animate-pulse" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Hébergement Fichiers Sécurisé</h3>
-              <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                Uploadez vos PDF, archives, vidéos ou intégrez vos liens Notion/Canva de façon protégée. Nous ne délivrons le cadeau qu'après vérification absolue.
+              <h3 className="text-base font-bold text-white">{t.landingBento1Title}</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                {t.landingBento1Desc}
               </p>
             </div>
 
             {/* Box 2 */}
-            <div className="p-6 rounded-2xl border border-slate-100 dark:border-zinc-850 dark:bg-zinc-900 space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-violet-50 dark:bg-zinc-950 flex items-center justify-center text-violet-600">
+            <div className="p-8 rounded-2xl border border-slate-800 bg-slate-900/60 hover:bg-slate-900 hover:border-indigo-500/30 transition-all duration-300 space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-center text-pink-400 shadow-inner">
                 <Zap className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">QR Code & Liens de Bio</h3>
-              <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                Toutes vos campagnes génèrent de superbes pages d'atterrissage optimisées mobile avec un code QR vectoriel instantané pour les stories et bio Instagram.
+              <h3 className="text-base font-bold text-white">{t.landingBento2Title}</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                {t.landingBento2Desc}
               </p>
             </div>
 
             {/* Box 3 */}
-            <div className="p-6 rounded-2xl border border-slate-100 dark:border-zinc-850 dark:bg-zinc-900 space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-zinc-950 flex items-center justify-center text-emerald-600">
+            <div className="p-8 rounded-2xl border border-slate-800 bg-slate-900/60 hover:bg-slate-900 hover:border-indigo-500/30 transition-all duration-300 space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-center text-emerald-400 shadow-inner">
                 <ShieldCheck className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Anti-Spam & Anti-Désabonnement</h3>
-              <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                Algorithmes de surveillance pour détecter les fraudeurs qui suppriment l'abonnement ou téléchargent plusieurs fois via différentes adresses e-mails.
+              <h3 className="text-base font-bold text-white">{t.landingBento3Title}</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                {t.landingBento3Desc}
               </p>
             </div>
 
@@ -376,35 +501,40 @@ export default function LandingPage({ setCurrentTab, setUserRole, setAuthModal }
         </div>
       </section>
 
-      {/* Testimonials Ticker */}
-      <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-xs font-extrabold text-violet-600 uppercase tracking-widest">RÉSULTATS PROUVEZ</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mt-2 mb-4">
-            Ils cartonnent avec SocialBoost
+      {/* ⭐ Gorgeous Testimonials Ticker (Similar to game store previews) */}
+      <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-2xl mx-auto mb-20 space-y-3">
+          <span className="text-xs font-extrabold text-pink-400 uppercase tracking-widest">{t.landingTestimonialsPill}</span>
+          <h2 className="text-3xl sm:text-4.5xl font-extrabold text-white tracking-tight">
+            {t.landingTestimonialsHeading}
           </h2>
-          <p className="text-slate-500 dark:text-zinc-450 text-sm">
-            Vos collègues économisent des milliers d'euros en publicité payante grâce à la conversion de leur audience naturelle.
+          <p className="text-slate-400 text-sm">
+            {t.landingTestimonialsSub}
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {TESTIMONIALS.map((test) => (
-            <div key={test.id} className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-slate-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between space-y-6">
-              <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed italic">
+            <div key={test.id} className="bg-slate-900 p-6 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-6 hover:border-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/5 transition-all">
+              <p className="text-xs text-slate-350 leading-relaxed italic">
                 "{test.quote}"
               </p>
               
-              <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-zinc-850">
+              <div className="flex items-center justify-between pt-4 border-t border-slate-800/60">
                 <div className="flex items-center gap-3">
-                  <img src={test.avatar} alt={test.name} className="w-10 h-10 rounded-full object-cover" />
+                  <img 
+                    src={test.avatar} 
+                    alt={test.name} 
+                    referrerPolicy="no-referrer"
+                    className="w-10 h-10 rounded-full object-cover border border-slate-700" 
+                  />
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-zinc-200">{test.name}</h4>
-                    <p className="text-[10px] text-slate-500 dark:text-zinc-550">{test.role}</p>
+                    <h4 className="text-xs font-bold text-white">{test.name}</h4>
+                    <p className="text-[10px] text-slate-500 font-mono font-bold leading-relaxed">{test.role}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 dark:text-emerald-300 px-2 py-1 rounded text-xs font-bold font-mono">
-                  <TrendingUp className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1.5 text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-xs font-black font-mono">
+                  <TrendingUp className="w-3.5 h-3.5 animate-pulse" />
                   {test.followersGained}
                 </div>
               </div>
@@ -413,12 +543,12 @@ export default function LandingPage({ setCurrentTab, setUserRole, setAuthModal }
         </div>
       </section>
 
-      {/* Accordion FAQ section */}
-      <section className="bg-white dark:bg-zinc-950 py-20 border-t border-slate-150 dark:border-zinc-900 transition-colors">
+      {/* 💬 Accordion FAQ section with cyber elements */}
+      <section className="bg-slate-950 py-24 border-t border-slate-800/50 transition-colors">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <span className="text-xs font-extrabold text-blue-600 uppercase tracking-widest">FAQ</span>
-            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mt-2 mb-4">
+          <div className="text-center mb-16 space-y-2">
+            <span className="text-xs font-extrabold text-indigo-400 uppercase tracking-widest">FAQ</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
               Des questions ? Nous y répondons.
             </h2>
           </div>
@@ -429,19 +559,19 @@ export default function LandingPage({ setCurrentTab, setUserRole, setAuthModal }
               return (
                 <div 
                   key={faq.id} 
-                  className="border border-slate-100 dark:border-zinc-850 rounded-xl overflow-hidden transition-all bg-slate-50/30 dark:bg-zinc-900/40"
+                  className="border border-slate-800 bg-slate-900/40 rounded-xl overflow-hidden transition-all duration-200"
                 >
                   <button
                     id={`faq-btn-${faq.id}`}
                     onClick={() => toggleFaq(faq.id)}
-                    className="w-full flex items-center justify-between px-5 py-4 text-left font-bold text-sm text-slate-800 dark:text-zinc-200 hover:bg-slate-100/40 dark:hover:bg-zinc-850/40 transition-all gap-4"
+                    className="w-full flex items-center justify-between px-6 py-4 text-left font-bold text-sm text-slate-250 hover:bg-slate-900 transition-all gap-4 cursor-pointer"
                   >
                     <span>{faq.question}</span>
-                    <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-blue-500' : ''}`} />
+                    <ChevronDown className={`w-4 h-4 text-slate-450 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-cyan-400' : ''}`} />
                   </button>
                   
                   {isOpen && (
-                    <div className="px-5 pb-5 pt-1 text-xs text-slate-500 dark:text-zinc-400 leading-relaxed border-t border-slate-100 dark:border-zinc-850/50">
+                    <div className="px-6 pb-5 pt-1 text-xs text-slate-400 leading-relaxed border-t border-slate-800/40 animate-fade-in">
                       {faq.answer}
                     </div>
                   )}
@@ -452,30 +582,41 @@ export default function LandingPage({ setCurrentTab, setUserRole, setAuthModal }
         </div>
       </section>
 
-      {/* Final Call to Action */}
-      <section className="py-20 bg-gradient-to-tr from-blue-700 via-indigo-600 to-violet-700 text-white relative overflow-hidden text-center px-4 sm:px-6 lg:px-8">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent pointer-events-none"></div>
+      {/* 🚀 Reference Style Bottom CTA - Large Glowing Dashboard (Resembling full mockup layout) */}
+      <section className="py-24 bg-gradient-to-tr from-slate-950 via-slate-900 to-indigo-950 text-white relative overflow-hidden text-center px-4 sm:px-6 lg:px-8 border-t border-slate-850">
+        <div className="absolute inset-0 bg-blue-500/[0.02] pointer-events-none"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none"></div>
         
-        <div className="max-w-3xl mx-auto space-y-6">
-          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
-            N'achetez plus d'abonnés de mauvaise qualité. Offrez de la valeur !
+        <div className="max-w-4xl mx-auto space-y-8 relative z-10">
+          
+          <div className="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-cyan-950/60 border border-cyan-505/20 text-cyan-400 font-mono">
+            {t.landingBottomPill}
+          </div>
+
+          <h2 className="text-3xl sm:text-5.5xl font-black tracking-tight leading-[1.05]">
+            {t.landingBottomHeadingMain}<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-pink-400 font-extrabold">{t.landingBottomHeadingGrad}</span>
           </h2>
-          <p className="text-blue-100 text-base max-w-xl mx-auto leading-relaxed">
-            Profitez de notre formule d'évaluation gratuite pour faire l'expérience du pilote automatique. Rejoignez aujourd'hui plus de 14 000 créateurs de premier plan.
+
+          <p className="text-slate-350 text-base max-w-xl mx-auto leading-relaxed">
+            {t.landingBottomSub}
           </p>
+
           <div className="pt-4">
             <button
-              id="cta-bottom-creator-trial"
-              onClick={startAsCreator}
-              className="inline-flex items-center gap-2 bg-white text-blue-700 hover:bg-blue-50 px-8 py-4 rounded-xl text-sm font-bold shadow-xl transition-all font-sans"
+               id="cta-bottom-creator-trial-v2"
+               onClick={startAsCreator}
+               className="inline-flex items-center gap-2.5 bg-gradient-to-r from-cyan-500 via-indigo-550 to-purple-600 hover:opacity-95 text-white px-8 py-4.5 rounded-xl text-sm font-black shadow-2xl shadow-indigo-500/20 active:scale-[0.99] transition-all font-sans cursor-pointer"
             >
-              Lancer mon compte gratuit immédiatement
-              <ArrowRight className="w-4 h-4" />
+              {t.landingBottomBtn}
+              <ArrowRight className="w-4 h-4 text-indigo-200" />
             </button>
           </div>
-          <p className="text-[11px] text-blue-200 font-mono">
-            Gratuit pour toujours avec 1 campagne active • Pas de carte bancaire requise
+          
+          <p className="text-[11px] text-slate-500 font-mono tracking-wider font-bold">
+            {t.landingBottomFooter}
           </p>
+
         </div>
       </section>
 

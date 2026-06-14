@@ -1,9 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
 import { Campaign, RewardFile, LeaderboardUser } from './types';
 
-// Retrieve environment credentials from Vite env
-const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+// Retrieve environment credentials from Vite env and sanitize them
+const sanitizeEnvVal = (val: string | undefined | null): string => {
+  if (!val) return '';
+  const trimmed = val.trim();
+  if (
+    trimmed === '' || 
+    trimmed === 'undefined' || 
+    trimmed === 'null' || 
+    trimmed.includes('placeholder') || 
+    trimmed.includes('YOUR_') ||
+    trimmed.includes('your-project') ||
+    trimmed.includes('yzlswmhmkaueumoerivn')
+  ) {
+    return '';
+  }
+  return trimmed;
+};
+
+const supabaseUrl = sanitizeEnvVal((import.meta as any).env?.VITE_SUPABASE_URL);
+const supabaseAnonKey = sanitizeEnvVal((import.meta as any).env?.VITE_SUPABASE_ANON_KEY) || sanitizeEnvVal((import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY);
 
 // Create Supabase client (only created if both credentials are provided to avoid runtime errors)
 export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
@@ -182,7 +199,9 @@ const toCampaignObject = (row: any): Campaign => {
     expirationDate: row.expiration_date,
     status: row.status as any,
     createdAt: row.created_at ? new Date(row.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-    pointsReward: row.points_reward || 100
+    pointsReward: row.points_reward || 100,
+    emailVerificationEnabled: row.email_verification_enabled || false,
+    emailForVerification: row.email_for_verification || undefined
   };
 };
 
@@ -206,7 +225,9 @@ const toCampaignDbRow = (camp: Campaign) => {
     max_participants: camp.maxParticipants || null,
     expiration_date: camp.expirationDate,
     status: camp.status,
-    points_reward: camp.pointsReward
+    points_reward: camp.pointsReward,
+    email_verification_enabled: camp.emailVerificationEnabled || false,
+    email_for_verification: camp.emailForVerification || null
   };
 };
 

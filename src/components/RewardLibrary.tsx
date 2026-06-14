@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Folder, 
   Upload, 
@@ -13,6 +13,8 @@ import {
   Database
 } from 'lucide-react';
 import { RewardFile, RewardType } from '../types';
+import { useLanguage } from '../context/LanguageContext';
+import AlertDialog from './AlertDialog';
 
 interface RewardLibraryProps {
   files: RewardFile[];
@@ -26,7 +28,12 @@ export default function RewardLibrary({
   onAddFile, 
   onDeleteFile,
   addNotification 
-}: RewardLibraryProps) {
+ }: RewardLibraryProps) {
+  const { language } = useLanguage();
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<RewardFile | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [newFileName, setNewFileName] = useState('');
   const [newFileType, setNewFileType] = useState<RewardType>('pdf');
@@ -62,28 +69,65 @@ export default function RewardLibrary({
     }, 1200);
   };
 
-  const simulateDragDropUpload = () => {
+  const handleFileDropOrSelect = (file: File) => {
     setIsUploading(true);
     setTimeout(() => {
+      const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      let detectedType: RewardType = 'pdf';
+      if (ext === 'zip' || ext === 'rar' || ext === 'tar') detectedType = 'software';
+      else if (ext === 'mp4' || ext === 'mov' || ext === 'avi') detectedType = 'video';
+      else if (ext === 'json' || ext === 'txt') detectedType = 'prompt';
+
       const addedFile: RewardFile = {
         id: `rew-${Date.now()}`,
-        name: `Guide_Pratique_Growth_${Math.floor(Math.random() * 900) + 100}.pdf`,
-        type: 'pdf',
-        size: '14.2 MB',
+        name: file.name,
+        type: detectedType,
+        size: `${sizeInMB} MB`,
         downloadCount: 0,
-        url: 'https://socialboost.app/files/downloads/random_guide_autogen.pdf',
+        url: URL.createObjectURL(file), // Generate an actual local secure URL
         createdAt: new Date().toISOString().split('T')[0]
       };
 
       onAddFile(addedFile);
       setIsUploading(false);
-      addNotification('Téléversement Automatisé ✨', `Nouveau fichier d’évaluation "${addedFile.name}" uploadé avec succès !`, 'success');
-    }, 1500);
+      addNotification('Fichier Chargé ✅', `Le document "${addedFile.name}" (${addedFile.size}) a été traité avec succès !`, 'success');
+    }, 1000);
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileDropOrSelect(e.dataTransfer.files[0]);
+    }
+  };
+
+  const onInputFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFileDropOrSelect(e.target.files[0]);
+    }
   };
 
   const filteredFiles = files.filter(f => 
     f.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleDeleteClick = (file: RewardFile) => {
+    setFileToDelete(file);
+    setIsDeleteAlertOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (fileToDelete) {
+      onDeleteFile(fileToDelete.id);
+      setIsDeleteAlertOpen(false);
+      setFileToDelete(null);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8 animate-fade-in text-gray-900 dark:text-zinc-150">
@@ -116,7 +160,7 @@ export default function RewardLibrary({
           <form onSubmit={handleSimulatedUpload} className="space-y-4 text-xs">
             
             <div className="space-y-1">
-              <label className="font-bold text-gray-700 dark:text-zinc-350">Nom du fichier cible *</label>
+              <label className="font-bold text-gray-700 dark:text-zinc-300">Nom du fichier cible *</label>
               <input
                 type="text"
                 required
@@ -129,7 +173,7 @@ export default function RewardLibrary({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="font-bold text-gray-700 dark:text-zinc-350">Format de cadeau</label>
+                <label className="font-bold text-gray-700 dark:text-zinc-300">Format de cadeau</label>
                 <select
                   value={newFileType}
                   onChange={(e) => setNewFileType(e.target.value as RewardType)}
@@ -146,7 +190,7 @@ export default function RewardLibrary({
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-gray-700 dark:text-zinc-350">Taille estimée</label>
+                <label className="font-bold text-gray-700 dark:text-zinc-300">Taille estimée</label>
                 <input
                   type="text"
                   placeholder="Ex: 5.8 MB ou 142 KB"
@@ -158,7 +202,7 @@ export default function RewardLibrary({
             </div>
 
             <div className="space-y-1">
-              <label className="font-bold text-gray-700 dark:text-zinc-350">URL Secrète de Téléchargement *</label>
+              <label className="font-bold text-gray-700 dark:text-zinc-300">URL Secrète de Téléchargement *</label>
               <input
                 type="url"
                 required
@@ -187,16 +231,24 @@ export default function RewardLibrary({
 
           </form>
 
-          {/* Drag & Drop simulated box */}
+          {/* Drag & Drop zone */}
           <div 
-            onClick={simulateDragDropUpload}
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
             className="border-2 border-dashed border-slate-150 hover:border-blue-500 rounded-xl p-5 text-center cursor-pointer space-y-2 bg-slate-50/50 hover:bg-blue-50/10 transition-all dark:bg-zinc-950/20 dark:border-zinc-850 dark:hover:border-blue-900/40"
-            title="Cliquez pour simuler un drop de fichier de votre PC"
+            title="Glissez-déposez ou cliquez pour téléverser votre fichier"
           >
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              onChange={onInputFileChange} 
+            />
             <Upload className="w-6 h-6 text-gray-400 mx-auto" strokeWidth={1.5} />
-            <p className="text-[10px] font-bold text-gray-700 dark:text-zinc-300">Option Drag & Drop Directe IP</p>
-            <p className="text-[9px] text-gray-400">Glissez un PDF / ZIP ici pour le charger automatiquement sur le cloud.</p>
-            <p className="text-[9px] text-blue-600 underline font-semibold">Simuler l'upload rapide ↗</p>
+            <p className="text-[10px] font-bold text-gray-750 dark:text-zinc-300">Zone de Dépose de Fichiers</p>
+            <p className="text-[9px] text-gray-400">Glissez-déposez un PDF / ZIP ici ou cliquez pour parcourir.</p>
+            <p className="text-[9px] text-blue-600 underline font-semibold">Téléverser mon fichier ↗</p>
           </div>
         </div>
 
@@ -252,8 +304,8 @@ export default function RewardLibrary({
                       </button>
                       
                       <button
-                        onClick={() => onDeleteFile(file.id)}
-                        className="p-1.5 hover:bg-rose-50 text-rose-500 rounded border border-transparent hover:border-rose-100 dark:hover:bg-rose-950/20"
+                        onClick={() => handleDeleteClick(file)}
+                        className="p-1.5 hover:bg-rose-50 text-rose-500 rounded border border-transparent hover:border-rose-100 dark:hover:bg-rose-950/20 cursor-pointer"
                         title="Archiver"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -267,6 +319,44 @@ export default function RewardLibrary({
         </div>
 
       </div>
+
+      <AlertDialog
+        isOpen={isDeleteAlertOpen}
+        onClose={() => {
+          setIsDeleteAlertOpen(false);
+          setFileToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title={
+          language === 'fr' 
+            ? 'Supprimer le fichier ?' 
+            : language === 'es' 
+              ? '¿Eliminar archivo de recompensa?' 
+              : 'Delete reward file?'
+        }
+        description={
+          language === 'fr'
+            ? `Êtes-vous sûr de vouloir supprimer définitivement "${fileToDelete?.name || ''}" de votre bibliothèque de récompenses ?`
+            : language === 'es'
+              ? `¿Está seguro de que desea eliminar permanentemente "${fileToDelete?.name || ''}" de su biblioteca de recompensas?`
+              : `Are you sure you want to permanently delete "${fileToDelete?.name || ''}" from your reward library?`
+        }
+        confirmText={
+          language === 'fr'
+            ? 'Supprimer'
+            : language === 'es'
+              ? 'Eliminar'
+              : 'Delete'
+        }
+        cancelText={
+          language === 'fr'
+            ? 'Annuler'
+            : language === 'es'
+              ? 'Cancelar'
+              : 'Cancel'
+        }
+        type="danger"
+      />
 
     </div>
   );

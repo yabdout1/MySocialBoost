@@ -1,11 +1,14 @@
 import React from 'react';
 import { Sparkles, HeartHandshake, ShieldCheck, Mail, HelpCircle } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface FooterProps {
   setCurrentTab: (tab: string) => void;
 }
 
 export default function Footer({ setCurrentTab }: FooterProps) {
+  const { t } = useLanguage();
+
   return (
     <footer className="border-t bg-white dark:bg-zinc-950 text-gray-600 dark:text-zinc-400 border-gray-100 dark:border-zinc-800 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
@@ -23,32 +26,32 @@ export default function Footer({ setCurrentTab }: FooterProps) {
               </span>
             </div>
             <p className="text-xs leading-relaxed text-gray-500 dark:text-zinc-500">
-              « Développez votre audience grâce à la valeur que vous offrez. »
+              {t.footerTagline}
             </p>
             <p className="text-xs text-gray-400 dark:text-zinc-650 font-mono">
-              La passerelle SaaS ultime entre influenceurs francophones et abonnés engagés.
+              {t.footerSub}
             </p>
           </div>
 
           {/* SaaS Navigation */}
           <div>
             <h4 className="text-xs font-bold text-gray-900 dark:text-zinc-200 uppercase tracking-wider mb-4">
-              Plateforme
+              {t.platform}
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
                 <button onClick={() => setCurrentTab('marketplace')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  Marketplace de Récompenses
+                  {t.navMarketplaceShort}
                 </button>
               </li>
               <li>
                 <button onClick={() => setCurrentTab('pricing')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  Plans d'Abonnement
+                  {t.navPricingShort}
                 </button>
               </li>
               <li>
                 <button onClick={() => setCurrentTab('blog')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  Le Blog Growth
+                  {t.navBlogShort}
                 </button>
               </li>
             </ul>
@@ -57,22 +60,22 @@ export default function Footer({ setCurrentTab }: FooterProps) {
           {/* Pro Resources */}
           <div>
             <h4 className="text-xs font-bold text-gray-900 dark:text-zinc-200 uppercase tracking-wider mb-4">
-              Ressources & Support
+              {t.resourcesSupport}
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
                 <button onClick={() => setCurrentTab('help')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  Foire aux questions (FAQ)
+                  {t.faqShort}
                 </button>
               </li>
               <li>
                 <button onClick={() => setCurrentTab('help')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  Centre d'aide intégrale
+                  {t.helpCenter}
                 </button>
               </li>
               <li>
                 <button onClick={() => setCurrentTab('contact')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  Contacter le support client
+                  {t.contactSupport}
                 </button>
               </li>
             </ul>
@@ -81,22 +84,22 @@ export default function Footer({ setCurrentTab }: FooterProps) {
           {/* Legal columns */}
           <div>
             <h4 className="text-xs font-bold text-gray-900 dark:text-zinc-200 uppercase tracking-wider mb-4">
-              Mentions Légales
+              {t.legalName}
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
                 <button onClick={() => setCurrentTab('terms')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  Conditions Générales d'Utilisation
+                  {t.cgu}
                 </button>
               </li>
               <li>
                 <button onClick={() => setCurrentTab('privacy')} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  Politique de Confidentialité RGPD
+                  {t.privacyPolicy}
                 </button>
               </li>
               <li className="flex items-center gap-1.5 text-[10px] text-emerald-500 font-semibold bg-emerald-50 dark:bg-emerald-950/20 px-2 py-1 rounded inline-flex mt-1">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                Conformité 100% RGPD
+                {t.rgpdCompliant}
               </li>
             </ul>
           </div>
@@ -106,14 +109,14 @@ export default function Footer({ setCurrentTab }: FooterProps) {
         {/* Legal Stripe footer bottom */}
         <div className="border-t pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-gray-100 dark:border-zinc-800">
           <p className="text-[11px] text-gray-400 dark:text-zinc-650">
-            &copy; {new Date().getFullYear()} SocialBoost Corp. Tous droits réservés. Développé en conformité avec les conditions d'utilisation des plateformes sociales.
+            &copy; {new Date().getFullYear()} SocialBoost Corp. {t.rightsReserved}
           </p>
-          <div className="flex items-center gap-4 text-[10px] text-gray-400 dark:text-zinc-600">
+          <div className="flex items-center gap-4 text-[10px] text-gray-400 dark:text-zinc-650">
             <span className="flex items-center gap-1">
               <Mail className="w-3 h-3 text-violet-500" /> support@socialboost.app
             </span>
             <span className="flex items-center gap-1">
-              <HeartHandshake className="w-3 h-3 text-red-500" /> Fait avec amour pour les Créateurs
+              <HeartHandshake className="w-3 h-3 text-red-500" /> {t.madeWithLove}
             </span>
           </div>
         </div>

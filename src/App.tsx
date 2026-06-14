@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
   Trash2, 
@@ -40,7 +41,7 @@ import {
 
 export default function App() {
   // Theme Manager
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
   // States
   const [currentTab, setCurrentTab] = useState<string>('home');
@@ -52,6 +53,7 @@ export default function App() {
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
   const [authEmail, setAuthEmail] = useState<string>('');
   const [authPassword, setAuthPassword] = useState<string>('');
+  const [shouldShakeEmail, setShouldShakeEmail] = useState<boolean>(false);
   
   const [upgradeModalPlan, setUpgradeModalPlan] = useState<string | null>(null);
   const [selectedGateway, setSelectedGateway] = useState<'fedapay' | 'paypal'>('fedapay');
@@ -59,6 +61,9 @@ export default function App() {
   const [isPaying, setIsPaying] = useState<boolean>(false);
   const [paymentStep, setPaymentStep] = useState<string>('');
   const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false);
+  const [fedaPayCheckoutUrl, setFedaPayCheckoutUrl] = useState<string>('');
+  const [fedaPayTxId, setFedaPayTxId] = useState<string>('');
+  const [paymentError, setPaymentError] = useState<string>('');
 
   // Databases (Saved to client side localStorage)
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -68,7 +73,7 @@ export default function App() {
     {
       id: 'not-1',
       title: 'Bienvenue sur SocialBoost ! 🚀',
-      message: 'Développez vôtres trafic organique grâce au rachat par récompense digitale.',
+      message: 'Développez votre trafic organique grâce au rachat par récompense digitale.',
       time: 'À l\'instant',
       read: false,
       type: 'success'
@@ -224,6 +229,24 @@ export default function App() {
     }
   };
 
+  const updateCampaign = async (camp: Campaign) => {
+    const updated = campaigns.map(c => c.id === camp.id ? camp : c);
+    setCampaigns(updated);
+    localStorage.setItem('socialboost_campaigns', JSON.stringify(updated));
+    addNotification(
+      'Campagne mise à jour ! 🛡️',
+      `Les paramètres de "${camp.title}" ont été mis à jour de manière sécurisée.`,
+      'success'
+    );
+
+    if (isSupabaseConfigured()) {
+      const ok = await dbInsertCampaign(camp);
+      if (ok) {
+        addNotification('Base de données Supabase ⚡', 'Modifications de campagne propagées.', 'success');
+      }
+    }
+  };
+
   const incrementCampaignParticipants = async (id: string) => {
     let nextCount = 0;
     const updated = campaigns.map(c => {
@@ -294,16 +317,30 @@ export default function App() {
 
   const handleSimulatedLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!authEmail) return;
+    if (!authEmail || !authEmail.includes('@') || authPassword.length < 6) {
+      // Trigger temporary shake state
+      setShouldShakeEmail(true);
+      setTimeout(() => setShouldShakeEmail(false), 550);
+      addNotification(
+        'Erreur de Connexion ⚠️',
+        'Veuillez entrer une adresse e-mail valide et un mot de passe de 6 caractères minimum.',
+        'warning'
+      );
+      return;
+    }
     setUserRole('creator');
     setAuthModalOpen(false);
     setCurrentTab('creator-dashboard');
     addNotification('Connexion Réussie 👋', `Content de vous revoir en tant que ${authEmail}!`, 'success');
   };
 
-  // Simulated billing checkout logic (FedaPay, Mobile Money & PayPal)
-  const executeSimulatedPayment = (e: React.FormEvent) => {
+  // Real integrated FedaPay checkout logic (Mobile Money & Card)
+  const executePayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPaymentError('');
+    setFedaPayCheckoutUrl('');
+    setFedaPayTxId('');
+
     if (selectedGateway === 'fedapay' && !fedaPayPhone) {
       alert('Veuillez renseigner votre numéro de téléphone.');
       return;
@@ -313,44 +350,120 @@ export default function App() {
     setPaymentSuccess(false);
     setPaymentStep("Initialisation de la transaction cryptée...");
 
-    // Stage 1
-    setTimeout(() => {
-      setPaymentStep(
-        selectedGateway === 'fedapay' 
-          ? "Appel d'API FedaPay USSD... Push de notification de paiement mobile envoyé." 
-          : "Connexion sécurisée aux serveurs de PayPal..."
-      );
-    }, 1200);
+    // Conversion: 1 EUR ~ 655.957 XOF. FedaPay works in XOF.
+    const amountXof = upgradeModalPlan === 'Starter Plan' ? 5900 : upgradeModalPlan === 'Pro Plan' ? 19000 : 38700;
 
-    // Stage 2
-    setTimeout(() => {
-      setPaymentStep(
-        selectedGateway === 'fedapay' 
-          ? `Attente de validation du code PIN sur le terminal (${fedaPayPhone})...` 
-          : "Paiement en cours d'approbation bancaire..."
-      );
-    }, 2800);
+    try {
+      if (selectedGateway === 'fedapay') {
+        const response = await fetch('/api/fedapay/checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: amountXof,
+            planName: upgradeModalPlan,
+            email: authEmail || "createur@socialboost.app",
+            firstname: "Créateur",
+            lastname: "SocialBoost",
+            phone: fedaPayPhone,
+          }),
+        });
 
-    // Stage 3 (Success)
-    setTimeout(() => {
-      setPaymentStep("Transaction autorisée ! Enregistrement du Plan Pro sur la blockchain SocialBoost...");
-    }, 4500);
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Une erreur est survenue lors de l'appel du serveur FedaPay.");
+        }
 
-    // Finalize
-    setTimeout(() => {
+        const data = await response.json();
+        console.log("[FedaPay Backend Response]:", data);
+
+        setFedaPayCheckoutUrl(data.checkoutUrl);
+        setFedaPayTxId(data.id);
+
+        if (data.isSimulated) {
+          setPaymentStep("Simulation FedaPay: Session fictive initialisée avec succès !");
+          addNotification(
+            'Mode Simulation FedaPay 💡',
+            'Aucune clé API FedaPay installée. Double-cliquez ci-après pour valider fictivement.',
+            'info'
+          );
+        } else {
+          setPaymentStep("Session de paiement FedaPay créée ! Redirection vers le portail officiel...");
+        }
+
+        addNotification(
+          'FedaPay Checkout ⚡', 
+          'Redirection vers le portail de paiement mobile (MTN, Moov, Orange, Wave).', 
+          'info'
+        );
+
+        // Auto redirect within 2 seconds
+        setTimeout(() => {
+          window.location.href = data.checkoutUrl;
+        }, 2200);
+
+      } else {
+        // Paypal route simulated
+        setPaymentStep("Connexion sécurisée aux serveurs de PayPal...");
+        setTimeout(() => {
+          setPaymentStep("Transaction PayPal autorisée ! Activation de l'offre...");
+          setTimeout(() => {
+            setIsPaying(false);
+            setPaymentSuccess(true);
+            addNotification(
+              'Souscription Activée 💎',
+              `Bienvenue dans l'offre SocialBoost ${upgradeModalPlan} ! Vos quotas d'exports de trafic sont doublés.`,
+              'success'
+            );
+          }, 1000);
+        }, 1500);
+      }
+    } catch (err: any) {
+      console.error("[Checkout error]", err);
+      setPaymentError(err.message || "Erreur de connexion avec le serveur de paiement.");
       setIsPaying(false);
-      setPaymentSuccess(true);
-      addNotification(
-        'Souscription Activée 💎', 
-        `Bienvenue dans l'offre SocialBoost ${upgradeModalPlan} ! Vos quotas d'exports de trafic sont doublés.`, 
-        'success'
-      );
-    }, 5500);
+      addNotification('Erreur de paiement ❌', err.message || "La transaction a échoué.", 'warning');
+    }
+  };
+
+  // Check payment status from FedaPay endpoint helper
+  const verifyFedaPayStatus = async () => {
+    if (!fedaPayTxId) return;
+    setPaymentStep("Vérification en cours avec le serveur de paiement FedaPay...");
+    
+    try {
+      const resp = await fetch(`/api/fedapay/status/${fedaPayTxId}`);
+      if (resp.ok) {
+        const result = await resp.json();
+        // Check for success or simulation
+        if (result.status === "approved" || result.status === "success" || result.isSimulated) {
+          setIsPaying(false);
+          setPaymentSuccess(true);
+          addNotification(
+            'Abonnement premium Activé 🎉', 
+            `Paiement FedaPay reçu avec succès ! Bienvenue dans l'offre SocialBoost ${upgradeModalPlan}.`, 
+            'success'
+          );
+        } else {
+          addNotification(
+            'FedaPay Statut ⏳', 
+            `Statut de la transaction : "${result.status || 'En attente'}". Veuillez confirmer le code PIN sur votre mobile.`, 
+            'warning'
+          );
+        }
+      } else {
+        throw new Error("Impossible de contacter l'API de vérification.");
+      }
+    } catch (err: any) {
+      console.error("Status check fail", err);
+      addNotification('Vérification échouée ⚠️', 'La vérification a échoué, veuillez refaire.', 'warning');
+    }
   };
 
   return (
     <div className={isDarkMode ? 'dark' : 'light'}>
-      <div className="min-h-screen bg-slate-50 text-slate-800 dark:bg-zinc-950 dark:text-zinc-150 transition-colors duration-200 font-sans flex flex-col justify-between">
+      <div className="min-h-screen bg-white text-slate-800 dark:bg-zinc-950 dark:text-zinc-150 transition-colors duration-200 font-sans flex flex-col justify-between">
         
         {/* Core Layout Header navigation bar */}
         <Header 
@@ -418,7 +531,7 @@ export default function App() {
                   <div className="text-center max-w-2xl mx-auto space-y-3">
                     <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">FORMULES SAAS</span>
                     <h2 className="text-3xl font-extrabold tracking-tight">Des plans adaptés à votre croissance</h2>
-                    <p className="text-xs sm:text-sm text-slate-500">Commencez gratuitement, puis passez à la vitesse supérieure pour maximiser vôtres volume d'engagement et personnaliser vos capture templates.</p>
+                    <p className="text-xs sm:text-sm text-slate-500">Commencez gratuitement, puis passez à la vitesse supérieure pour maximiser votre volume d'engagement et personnaliser vos capture templates.</p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
@@ -580,6 +693,7 @@ export default function App() {
                 <CampaignList 
                   campaigns={campaigns}
                   onDeleteCampaign={deleteCampaign}
+                  onUpdateCampaign={updateCampaign}
                   setCurrentTab={setCurrentTab}
                   onSelectCampaign={setActiveExecCampaign}
                 />
@@ -635,101 +749,120 @@ export default function App() {
         {/* ================= MODAL DIALOGS ================= */}
 
         {/* 1. Sign In Simulation modal portal */}
-        {authModalOpen && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-sm w-full border border-slate-100 dark:border-zinc-800 shadow-2xl p-6 relative animate-fade-in text-gray-900 dark:text-zinc-150 text-xs">
-              
-              <button
-                id="auth-modal-close"
-                onClick={() => setAuthModalOpen(false)}
-                className="absolute top-4 right-4 p-1.5 bg-slate-50 hover:bg-slate-100 rounded-full text-zinc-400 hover:text-zinc-650"
+        <AnimatePresence>
+          {authModalOpen && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setAuthModalOpen(false);
+              }}
+              className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            >
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.93, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.93, y: 12 }}
+                transition={{ type: "spring", duration: 0.35, bounce: 0.12 }}
+                className="bg-white dark:bg-zinc-900 rounded-3xl max-w-sm w-full border border-slate-100 dark:border-zinc-800 shadow-2xl p-6 relative text-gray-900 dark:text-zinc-150 text-xs"
               >
-                <X className="w-4 h-4" />
-              </button>
+                
+                <button
+                  id="auth-modal-close"
+                  onClick={() => setAuthModalOpen(false)}
+                  className="absolute top-4 right-4 p-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800 dark:hover:bg-zinc-750 rounded-full text-zinc-400 hover:text-zinc-600 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
 
-              <div className="text-center space-y-3">
-                <div className="w-10 h-10 bg-indigo-50/50 rounded-xl mx-auto flex items-center justify-center text-indigo-650 animate-bounce">
-                  <Sparkles className="w-5.5 h-5.5" />
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-sm tracking-tight text-gray-950 dark:text-white">Créer mon compte SocialBoost</h3>
-                  <p className="text-[10px] text-gray-400 mt-0.5">Rejoignez 14,000+ créateurs d'Elite.</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-[10px] font-bold">
-                  <button 
-                    onClick={() => {
-                      setUserRole('creator');
-                      setAuthModalOpen(false);
-                      setCurrentTab('creator-dashboard');
-                      addNotification('Connexion Google ✅', 'Inscrit avec succès via Google OAuth v2.', 'success');
-                    }}
-                    type="button" 
-                    className="py-2.5 border rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-850"
-                  >
-                    Google OAuth
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setUserRole('creator');
-                      setAuthModalOpen(false);
-                      setCurrentTab('creator-dashboard');
-                      addNotification('Connexion Facebook ✅', 'Inscrit avec succès via Facebook Secure SDK.', 'success');
-                    }}
-                    type="button" 
-                    className="py-2.5 border rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-850"
-                  >
-                    Facebook Link
-                  </button>
-                </div>
-
-                <div className="relative py-2">
-                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t"></div></div>
-                  <span className="relative bg-white dark:bg-zinc-900 px-3 text-[9px] text-gray-400 uppercase font-bold">OU PAR ADRESSE EMAIL</span>
-                </div>
-
-                <form onSubmit={handleSimulatedLogin} className="space-y-4 text-left">
-                  <div className="space-y-1">
-                    <label className="font-bold text-gray-750 dark:text-zinc-350">Adresse e-mail de connexion *</label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="crea@studio_growth.com"
-                      value={authEmail}
-                      onChange={(e) => setAuthEmail(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border bg-slate-50 dark:bg-zinc-950 check_email"
-                    />
+                <div className="text-center space-y-3">
+                  <div className="w-10 h-10 bg-indigo-50/50 rounded-xl mx-auto flex items-center justify-center text-indigo-650 animate-bounce">
+                    <Sparkles className="w-5.5 h-5.5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm tracking-tight text-gray-950 dark:text-white">Créer mon compte SocialBoost</h3>
+                    <p className="text-[10px] text-gray-400 mt-0.5">Rejoignez 14,000+ créateurs d'Elite.</p>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="font-bold text-gray-750 dark:text-zinc-350">Mot de passe *</label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="••••••••"
-                      value={authPassword}
-                      onChange={(e) => setAuthPassword(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 rounded-lg border"
-                    />
+                  <div className="grid grid-cols-2 gap-2 text-[10px] font-bold">
+                    <button 
+                      onClick={() => {
+                        setUserRole('creator');
+                        setAuthModalOpen(false);
+                        setCurrentTab('creator-dashboard');
+                        addNotification('Connexion Google ✅', 'Inscrit avec succès via Google OAuth v2.', 'success');
+                      }}
+                      type="button" 
+                      className="py-2.5 border rounded-lg hover:bg-slate-50 dark:border-zinc-800 dark:hover:bg-zinc-850"
+                    >
+                      Google OAuth
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setUserRole('creator');
+                        setAuthModalOpen(false);
+                        setCurrentTab('creator-dashboard');
+                        addNotification('Connexion Facebook ✅', 'Inscrit avec succès via Facebook Secure SDK.', 'success');
+                      }}
+                      type="button" 
+                      className="py-2.5 border rounded-lg hover:bg-slate-50 dark:border-zinc-800 dark:hover:bg-zinc-850"
+                    >
+                      Facebook Link
+                    </button>
                   </div>
 
-                  <button
-                    id="auth-btn-signin-modal"
-                    type="submit"
-                    className="w-full py-2.5 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-violet-650 text-white shadow hover:opacity-95 text-xs flex items-center justify-center gap-1 cursor-pointer"
-                  >
-                    <LogIn className="w-4 h-4" /> Créer mon Espace Créateur SaaS
-                  </button>
-                </form>
+                  <div className="relative py-2">
+                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100 dark:border-zinc-800"></div></div>
+                    <span className="relative bg-white dark:bg-zinc-900 px-3 text-[9px] text-gray-400 uppercase font-bold">OU PAR ADRESSE EMAIL</span>
+                  </div>
 
-                <p className="text-[9px] text-gray-400 leading-tight">
-                  En continuant, vous acceptez les conditions d'utilisation CGU et la charte de confidentialité conforme au RGPD.
-                </p>
-              </div>
+                  <form onSubmit={handleSimulatedLogin} className="space-y-4 text-left">
+                    <div className="space-y-1">
+                      <label className="font-bold text-gray-700 dark:text-zinc-300">Adresse e-mail de connexion *</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="crea@studio_growth.com"
+                        value={authEmail}
+                        onChange={(e) => setAuthEmail(e.target.value)}
+                        className={`w-full px-3 py-2 rounded-lg border bg-slate-50 dark:bg-zinc-950 check_email transition-all duration-150 ${
+                          shouldShakeEmail ? 'animate-shake border-rose-500 ring-2 ring-rose-500/20' : ''
+                        }`}
+                      />
+                    </div>
 
-            </div>
-          </div>
-        )}
+                    <div className="space-y-1">
+                      <label className="font-bold text-gray-700 dark:text-zinc-300">Mot de passe *</label>
+                      <input
+                        type="password"
+                        required
+                        placeholder="••••••••"
+                        value={authPassword}
+                        onChange={(e) => setAuthPassword(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 rounded-lg border dark:border-zinc-800"
+                      />
+                    </div>
+
+                    <button
+                      id="auth-btn-signin-modal"
+                      type="submit"
+                      className="w-full py-2.5 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-violet-650 text-white shadow hover:opacity-95 text-xs flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <LogIn className="w-4 h-4" /> Créer mon Espace Créateur SaaS
+                    </button>
+                  </form>
+
+                  <p className="text-[9px] text-gray-400 leading-tight">
+                    En continuant, vous acceptez les conditions d'utilisation CGU et la charte de confidentialité conforme au RGPD.
+                  </p>
+                </div>
+
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* 2. Billing Upgrade checkout Portal simulated with FedaPay & PayPal */}
         {upgradeModalPlan && (
@@ -757,16 +890,16 @@ export default function App() {
                     Mise à niveau vers SocialBoost : <strong className="text-indigo-600 dark:text-indigo-400">{upgradeModalPlan}</strong>
                   </h3>
                   <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                    Débloquez instantanément vôtres volume d'engagement illimité et l’exportation de contacts CSV.
+                    Débloquez instantanément votre volume d'engagement illimité et l’exportation de contacts CSV.
                   </p>
                 </div>
 
                 {!paymentSuccess ? (
-                  <form onSubmit={executeSimulatedPayment} className="space-y-4">
+                  <form onSubmit={executePayment} className="space-y-4">
                     
                     {/* Gateway selection input panels */}
                     <div className="space-y-1">
-                      <label className="font-bold text-gray-750 dark:text-zinc-350">Mode de paiement instantané</label>
+                      <label className="font-bold text-gray-700 dark:text-zinc-300">Mode de paiement instantané</label>
                       <div className="grid grid-cols-2 gap-3 text-xs">
                         
                         <button
@@ -775,7 +908,7 @@ export default function App() {
                           className={`p-3 border rounded-xl flex items-center justify-center gap-1.5 transition-all outline-none ${
                             selectedGateway === 'fedapay' 
                               ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-bold dark:bg-indigo-950/40 dark:text-indigo-400' 
-                              : 'border-slate-150 text-slate-400 bg-transparent hover:bg-slate-50/50'
+                              : 'border-slate-200 text-slate-400 bg-transparent hover:bg-slate-50/50'
                           }`}
                         >
                           💸 FedaPay (Mobile Money)
@@ -799,11 +932,11 @@ export default function App() {
                     {/* GATEWAY-SPECIFIC FIELDS */}
 
                     {selectedGateway === 'fedapay' ? (
-                      <div className="space-y-3 p-4 bg-slate-50 dark:bg-zinc-950 rounded-2xl border border-slate-150 dark:border-zinc-850">
+                      <div className="space-y-3 p-4 bg-slate-50 dark:bg-zinc-950 rounded-2xl border border-slate-200 dark:border-zinc-850">
                         <span className="text-[9px] font-mono tracking-widest text-emerald-500 font-bold uppercase block mb-1">Passerelle FedaPay Afrique de l'Ouest</span>
                         
                         <div className="space-y-1">
-                          <label className="font-bold text-gray-750 dark:text-zinc-300">Saisissez vôtres numéro de Mobile Money *</label>
+                          <label className="font-bold text-gray-700 dark:text-zinc-300">Saisissez votre numéro de Mobile Money *</label>
                           <input
                             type="tel"
                             required
@@ -815,7 +948,7 @@ export default function App() {
                         </div>
 
                         <p className="text-[10px] text-gray-400 leading-snug">
-                          Marques éligibles : <strong>MTN Mobile Money, Moov Flooz, Orange Money, Wave Pay</strong>. Vous allez recevoir un push de confirmation PIN sur vôtres combiné.
+                          Marques éligibles : <strong>MTN Mobile Money, Moov Flooz, Orange Money, Wave Pay</strong>.
                         </p>
                       </div>
                     ) : (
@@ -827,37 +960,67 @@ export default function App() {
                       </div>
                     )}
 
+                    {paymentError && (
+                      <div className="p-3 bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40 rounded-xl text-[11px] leading-relaxed">
+                        ⚠️ {paymentError}
+                      </div>
+                    )}
+
                     {/* Trigger upgrade */}
-                    <button
-                      id="pricing-btn-pay-modal"
-                      type="submit"
-                      disabled={isPaying}
-                      className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-lg flex items-center justify-center gap-1.5 cursor-pointer transition-all"
-                    >
-                      {isPaying ? (
-                        <>
-                          <Cpu className="w-4 h-4 animate-spin" strokeWidth={2.5} /> Traitement de l'abonnement...
-                        </>
-                      ) : (
-                        <>Valider et Activer la formule ({upgradeModalPlan === 'Starter Plan' ? '9.00' : upgradeModalPlan === 'Pro Plan' ? '29.00' : '59.00'} €/Mo)</>
-                      )}
-                    </button>
+                    {!fedaPayCheckoutUrl && (
+                      <button
+                        id="pricing-btn-pay-modal"
+                        type="submit"
+                        disabled={isPaying}
+                        className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-lg flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                      >
+                        {isPaying ? (
+                          <>
+                            <Cpu className="w-4 h-4 animate-spin" strokeWidth={2.5} /> Traitement de l'abonnement...
+                          </>
+                        ) : (
+                          <>Valider et Activer la formule ({upgradeModalPlan === 'Starter Plan' ? '9.00' : upgradeModalPlan === 'Pro Plan' ? '29.00' : '59.00'} €/Mo)</>
+                        )}
+                      </button>
+                    )}
 
                     {isPaying && (
-                      <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800 text-center font-mono text-[10px] text-zinc-300">
-                        🔍 STAGE : {paymentStep}
+                      <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800 text-center font-mono text-[10px] text-zinc-400 space-y-2">
+                        <div>🔍 ETAPE : {paymentStep}</div>
+                      </div>
+                    )}
+
+                    {fedaPayCheckoutUrl && (
+                      <div className="pt-2 space-y-3">
+                        <a
+                          href={fedaPayCheckoutUrl}
+                          target="_top"
+                          className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-lg flex items-center justify-center gap-1.5 transition-all text-center block"
+                        >
+                          🚀 Ouvrir le guichet FedaPay (Mobile Money) XOF
+                        </a>
+                        <button
+                          type="button"
+                          onClick={verifyFedaPayStatus}
+                          className="w-full py-2.5 border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-800 dark:text-zinc-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition-all"
+                        >
+                          🔄 Vérifier le statut de mon paiement
+                        </button>
+                        <p className="text-[10px] text-slate-400 text-center leading-snug">
+                          Une fois le paiement effectué sur votre téléphone, cliquez sur <strong>Vérifier le statut</strong> ci-dessus pour activer vos privilèges premium.
+                        </p>
                       </div>
                     )}
 
                   </form>
                 ) : (
-                  <div className="text-center py-6 space-y-4 animate-fade-in">
-                    <div className="w-12 h-12 bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-305 mx-auto rounded-full flex items-center justify-center animate-bounce">
+                  <div className="text-center py-6 space-y-4 animate-fade-in text-slate-800 dark:text-zinc-200">
+                    <div className="w-12 h-12 bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300 mx-auto rounded-full flex items-center justify-center animate-bounce">
                       ✓
                     </div>
                     
                     <div>
-                      <p className="text-sm font-extrabold text-green-600 uppercase tracking-widest">TRANSACTION COLLATÉRALE APPOLOGUÉE</p>
+                      <p className="text-sm font-extrabold text-green-600 uppercase tracking-widest">TRANSACTION VALIDÉE ET APPROUVÉE</p>
                       <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto text-center leading-relaxed">
                         Félicitations ! Les barrières de quotas sont levées. Vous êtes désormais sur le module de redirection PRO SocialBoost.
                       </p>
@@ -873,7 +1036,7 @@ export default function App() {
                       }}
                       className="w-full py-2.5 bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-lg text-xs font-semibold hover:bg-slate-800 dark:hover:bg-zinc-200 cursor-pointer"
                     >
-                      Aller sur vôtres Nouveau Tableau de bord Pro
+                      Aller sur votre nouveau Tableau de bord Pro
                     </button>
                   </div>
                 )}

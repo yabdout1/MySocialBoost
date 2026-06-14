@@ -11,6 +11,7 @@ import {
   Award
 } from 'lucide-react';
 import { Campaign, Platform } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface MarketplaceProps {
   campaigns: Campaign[];
@@ -18,6 +19,7 @@ interface MarketplaceProps {
 }
 
 export default function Marketplace({ campaigns, onSelectCampaign }: MarketplaceProps) {
+  const { t, language } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState<Platform>('all');
   const [sortBy, setSortBy] = useState<'popularity' | 'latest'>('popularity');
@@ -69,13 +71,13 @@ export default function Marketplace({ campaigns, onSelectCampaign }: Marketplace
       <div className="text-center max-w-3xl mx-auto space-y-4">
         <div className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-105 to-violet-100 px-3 py-1 rounded-full text-blue-700 dark:from-blue-950/20 dark:to-violet-950/20 dark:text-blue-300 text-xs font-bold font-sans">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Soutenez des créateurs de contenu & débloquez des ressources</span>
+          <span>{language === 'en' ? 'Support content creators & unlock resources' : language === 'es' ? 'Apoye a creadores de contenido y desbloquee recursos' : 'Soutenez des créateurs de contenu & débloquez des ressources'}</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-          La Marketplace SocialBoost
+          {language === 'en' ? 'SocialBoost Marketplace' : language === 'es' ? 'Mercado de SocialBoost' : 'La Marketplace SocialBoost'}
         </h1>
         <p className="text-sm text-slate-500 dark:text-zinc-400 max-w-xl mx-auto">
-          Découvrez des cadeaux digitaux certifiés à forte valeur ajoutée. Suivez, partagez ou réagissez pour y accéder instantanément.
+          {language === 'en' ? 'Discover high-value certified digital gifts. Follow, share, or engage to gain instant access.' : language === 'es' ? 'Descubra regalos digitales certificados de alto valor. Siga, comparta o participe para acceder al instante.' : 'Découvrez des cadeaux digitaux certifiés à forte valeur ajoutée. Suivez, partagez ou réagissez pour y accéder instantanément.'}
         </p>
       </div>
 
@@ -88,7 +90,7 @@ export default function Marketplace({ campaigns, onSelectCampaign }: Marketplace
             <Search className="w-4 h-4" />
             <input
               type="text"
-              placeholder="Rechercher par cadeau, créateur ou titre..."
+              placeholder={language === 'en' ? 'Search by gift, creator, or title...' : language === 'es' ? 'Buscar por regalo, creador o título...' : 'Rechercher par cadeau, créateur ou titre...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full text-xs bg-transparent border-0 outline-none text-slate-800 dark:text-zinc-100 focus:ring-0"
@@ -102,15 +104,15 @@ export default function Marketplace({ campaigns, onSelectCampaign }: Marketplace
               onChange={(e) => setSortBy(e.target.value as any)}
               className="px-3 py-2 text-xs border rounded-lg bg-slate-50 text-slate-600 dark:bg-zinc-950 dark:border-zinc-850 dark:text-zinc-300"
             >
-              <option value="popularity">Trier: Les plus supportés 🔥</option>
-              <option value="latest">Trier: Les plus récents 🕒</option>
+              <option value="popularity">{language === 'en' ? 'Sort: Popularity 🔥' : language === 'es' ? 'Ordenar: Popularidad 🔥' : 'Trier: Les plus supportés 🔥'}</option>
+              <option value="latest">{language === 'en' ? 'Sort: Latest 🕒' : language === 'es' ? 'Ordenar: Más recientes 🕒' : 'Trier: Les plus récents 🕒'}</option>
             </select>
           </div>
         </div>
 
         {/* Quick Horizontal Platform filters */}
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-50 dark:border-zinc-850">
-          <span className="text-[10px] font-mono tracking-widest text-slate-405 dark:text-zinc-550 uppercase mr-2">Filtre plateforme :</span>
+          <span className="text-[10px] font-mono tracking-widest text-slate-405 dark:text-zinc-550 uppercase mr-2">{language === 'en' ? 'Platform filter:' : language === 'es' ? 'Filtro de plataforma:' : 'Filtre plateforme :'}</span>
           
           <button
             onClick={() => setSelectedPlatform('all')}
@@ -120,7 +122,7 @@ export default function Marketplace({ campaigns, onSelectCampaign }: Marketplace
                 : 'bg-slate-50 text-slate-600 hover:bg-slate-100 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-850'
             }`}
           >
-            Tous les réseaux
+            {language === 'en' ? 'All Networks' : language === 'es' ? 'Todas las redes' : 'Tous les réseaux'}
           </button>
           
           {(['tiktok', 'youtube', 'instagram', 'telegram', 'twitter', 'facebook', 'linkedin'] as Platform[]).map((plat) => (
@@ -145,8 +147,8 @@ export default function Marketplace({ campaigns, onSelectCampaign }: Marketplace
         {filteredCampaigns.length === 0 ? (
           <div className="md:col-span-3 text-center py-20 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 space-y-4">
             <Gift className="w-12 h-12 text-slate-300 mx-auto animate-bounce" />
-            <h3 className="font-bold text-slate-700 dark:text-zinc-300">Aucune ressource disponible</h3>
-            <p className="text-xs text-slate-400">Modifiez vos critères de recherche ou de filtre pour explorer de nouvelles requêtes.</p>
+            <h3 className="font-bold text-slate-700 dark:text-zinc-300">{language === 'en' ? 'No resources available' : language === 'es' ? 'No hay recursos disponibles' : 'Aucune ressource disponible'}</h3>
+            <p className="text-xs text-slate-400">{language === 'en' ? 'Modify your search criteria or filters to explore more.' : language === 'es' ? 'Modifique sus criterios de búsqueda o filtros para explorar.' : 'Modifiez vos critères de recherche ou de filtre pour explorer de nouvelles requêtes.'}</p>
           </div>
         ) : (
           filteredCampaigns.map((camp) => (
@@ -188,13 +190,13 @@ export default function Marketplace({ campaigns, onSelectCampaign }: Marketplace
                   {/* Tasks visual display requirements preview */}
                   <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-850 space-y-1 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-gray-400 text-[10px]">Cadeau à gagner :</span>
+                      <span className="text-gray-400 text-[10px]">{language === 'en' ? 'Gift to claim:' : language === 'es' ? 'Regalo a ganar:' : 'Cadeau à gagner :'}</span>
                       <strong className="font-bold text-gray-700 dark:text-zinc-300 truncate max-w-[150px]">{camp.rewardTitle}</strong>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400 text-[10px]">Contrepartie :</span>
+                      <span className="text-gray-400 text-[10px]">{language === 'en' ? 'Required Action:' : language === 'es' ? 'Acción requerida:' : 'Contrepartie :'}</span>
                       <strong className="font-semibold text-indigo-600 dark:text-indigo-400">
-                        {camp.actionType === 'follow' ? 'S’abonner' : camp.actionType === 'subscribe' ? 'S’abonner' : 'Rejoindre'} ({camp.targetHandle})
+                        {camp.actionType === 'follow' ? (language === 'en' ? 'Follow' : language === 'es' ? 'Seguir' : t.dashTableActionAbonnement) : camp.actionType === 'subscribe' ? (language === 'en' ? 'Subscribe' : language === 'es' ? 'Suscribirse' : t.dashTableActionAbonner) : (language === 'en' ? 'Join' : language === 'es' ? 'Unirse' : t.dashTableActionPartager)} ({camp.targetHandle})
                       </strong>
                     </div>
                   </div>
@@ -205,7 +207,7 @@ export default function Marketplace({ campaigns, onSelectCampaign }: Marketplace
               <div className="p-5 border-t border-slate-50/50 dark:border-zinc-850 flex items-center justify-between">
                 <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold text-slate-500">
                   <Users className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{camp.participantsCount} rachetés</span>
+                  <span>{camp.participantsCount} {language === 'en' ? 'redeemed' : language === 'es' ? 'reclamados' : 'rachetés'}</span>
                 </div>
                 
                 <button
@@ -213,7 +215,7 @@ export default function Marketplace({ campaigns, onSelectCampaign }: Marketplace
                   onClick={() => onSelectCampaign(camp)}
                   className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 text-white rounded-lg text-xs font-bold hover:opacity-95 shadow-sm inline-flex items-center gap-1 cursor-pointer transition-all"
                 >
-                  Soutenir & Recevoir <ChevronRight className="w-3.5 h-3.5" />
+                  {language === 'en' ? 'Support & Claim' : language === 'es' ? 'Apoyar y Recibir' : 'Soutenir & Recevoir'} <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 

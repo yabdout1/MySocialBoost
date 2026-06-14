@@ -23,6 +23,8 @@ export interface Campaign {
   status: 'active' | 'expired' | 'pending' | 'paused';
   createdAt: string;
   pointsReward: number; // Gamification points for completing
+  emailVerificationEnabled?: boolean; // Enable verification code by email for modifying sensitive values
+  emailForVerification?: string;     // Email associated with the secure code verification
 }
 
 export interface RewardFile {
