@@ -21,18 +21,31 @@ interface RewardLibraryProps {
   onAddFile: (file: RewardFile) => void;
   onDeleteFile: (id: string) => void;
   addNotification: (title: string, message: string, type: 'success' | 'info' | 'warning') => void;
+  isLoading?: boolean;
 }
 
 export default function RewardLibrary({ 
   files, 
   onAddFile, 
   onDeleteFile,
-  addNotification 
+  addNotification,
+  isLoading
  }: RewardLibraryProps) {
   const { language } = useLanguage();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<RewardFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [localLoading, setLocalLoading] = useState(true);
+  
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setLocalLoading(false);
+    }, 750);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const loading = isLoading !== undefined ? isLoading : localLoading;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [newFileName, setNewFileName] = useState('');
@@ -267,7 +280,29 @@ export default function RewardLibrary({
           </div>
 
           <div className="space-y-3">
-            {filteredFiles.length === 0 ? (
+            {loading ? (
+              Array.from({ length: 3 }).map((_, idx) => (
+                <div key={idx} className="p-4 border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-slate-100 dark:border-zinc-850 bg-slate-50/10 dark:bg-zinc-950/10 animate-pulse">
+                  <div className="flex gap-3 w-full sm:w-2/3">
+                    <div className="p-2.5 rounded-lg bg-slate-150 dark:bg-zinc-800 w-10 h-10 shrink-0"></div>
+                    <div className="space-y-1.5 flex-1">
+                      <div className="h-4 bg-slate-200 dark:bg-zinc-800 rounded w-1/2"></div>
+                      <div className="h-3 bg-slate-150 dark:bg-zinc-850 rounded w-1/3"></div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-1/3 pt-2 sm:pt-0">
+                    <div className="text-left sm:text-right space-y-1">
+                      <div className="h-3.5 bg-slate-200 dark:bg-zinc-800 rounded w-8 sm:ml-auto"></div>
+                      <div className="h-2.5 bg-slate-100 dark:bg-zinc-850 rounded w-12 sm:ml-auto"></div>
+                    </div>
+                    <div className="flex gap-1.5 shrink-0">
+                      <div className="w-7 h-7 bg-slate-150 dark:bg-zinc-800 rounded"></div>
+                      <div className="w-7 h-7 bg-slate-150 dark:bg-zinc-800 rounded"></div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : filteredFiles.length === 0 ? (
               <div className="py-20 text-center text-slate-400 text-xs">
                 Aucun document n'a été téléversé avec cette nomenclature.
               </div>

@@ -12,7 +12,8 @@ import {
   Briefcase, 
   Layers, 
   MessageSquare,
-  Award
+  Award,
+  Mail
 } from 'lucide-react';
 import { AlertNotification } from '../types';
 import { useLanguage } from '../context/LanguageContext';
@@ -71,9 +72,6 @@ export default function Header({
             <div>
               <span className="font-sans font-extrabold text-xl tracking-tight bg-gradient-to-r from-blue-600 to-violet-500 bg-clip-text text-transparent">
                 SocialBoost
-              </span>
-              <span className="hidden sm:block text-[10px] font-mono tracking-wider uppercase text-gray-400 dark:text-zinc-500 leading-none">
-                GROWTH PLATFORM
               </span>
             </div>
           </div>
@@ -194,6 +192,18 @@ export default function Header({
                   }`}
                 >
                   {t.navAffiliation}
+                </button>
+                <button
+                  id="nav-gmail-cr"
+                  onClick={() => setCurrentTab('creator-gmail')}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+                    currentTab === 'creator-gmail' 
+                      ? 'bg-blue-50 text-blue-605 dark:bg-zinc-900 dark:text-blue-400 font-semibold' 
+                      : 'text-gray-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-zinc-200'
+                  }`}
+                >
+                  <Mail className="w-4 h-4 text-red-500 shrink-0" />
+                  <span>Gmail</span>
                 </button>
                 <button
                   id="nav-logout-cr"

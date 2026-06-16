@@ -8,7 +8,12 @@ import {
   Lock, 
   LogIn, 
   CreditCard,
-  Cpu
+  Cpu,
+  Mail,
+  ArrowUpRight,
+  ExternalLink,
+  CheckCircle,
+  Zap
 } from 'lucide-react';
 
 import Header from './components/Header';
@@ -24,8 +29,9 @@ import Affiliation from './components/Affiliation';
 import SupportPages from './components/SupportPages';
 import AdminPanel from './components/AdminPanel';
 import LoginPage from './components/LoginPage';
+import GmailAutomation from './components/GmailAutomation';
 
-import { Campaign, RewardFile, AlertNotification, LeaderboardUser } from './types';
+import { Campaign, RewardFile, AlertNotification, LeaderboardUser, SentinelEmail, GmailAutomationToast } from './types';
 import { INITIAL_CAMPAIGNS, DEFAULT_REWARDS_LIBRARY, LEADERBOARD } from './mockData';
 import { 
   isSupabaseConfigured, 
@@ -69,6 +75,11 @@ export default function App() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [files, setFiles] = useState<RewardFile[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
+
+  // Supabase Loading & Synchronization States
+  const [isCampaignsLoading, setIsCampaignsLoading] = useState<boolean>(true);
+  const [isFilesLoading, setIsFilesLoading] = useState<boolean>(true);
+  const [isLeaderboardLoading, setIsLeaderboardLoading] = useState<boolean>(true);
   const [notifications, setNotifications] = useState<AlertNotification[]>([
     {
       id: 'not-1',
@@ -87,6 +98,70 @@ export default function App() {
       type: 'info'
     }
   ]);
+
+  // Google SMTP/API Email Records List
+  const [realEmails, setRealEmails] = useState<SentinelEmail[]>(() => {
+    const saved = localStorage.getItem('socialboost_sentinel_emails');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error(e); }
+    }
+    return [
+      {
+        id: 'g-101',
+        from: 'alex.muller@gmail.com',
+        subject: 'Participation validée - Campagne Tiktok Booster',
+        body: 'Bonjour, j\'ai complété les étapes de follow (@alex_m1) et j\'ai joint ma capture. Pouvez-vous m\'envoyer l\'Ebook Prompts Pro ? Merci !',
+        date: 'Aujourd\'hui, 11:42',
+        read: true,
+        type: 'incoming',
+        subscriberName: 'Alex Muller',
+        associatedCampaign: 'Booster Tiktok Musique',
+        status: 'Validated'
+      },
+      {
+        id: 'g-102',
+        from: 'sarah.l@hotmail.fr',
+        subject: 'Re: [SocialBoost] Récompense pour Pack Canva Design Pro',
+        body: 'Merci beaucoup ! Le lien de téléchargement fonctionne parfaitement.',
+        date: 'Hier, 18:45',
+        read: true,
+        type: 'incoming',
+        subscriberName: 'Sarah Legrand',
+        associatedCampaign: 'Pack Canva Designer',
+        status: 'Validated'
+      },
+      {
+        id: 'g-out-101',
+        from: 'etsvictoria11@gmail.com',
+        subject: '[SocialBoost] Votre récompense pour Booster Tiktok Musique',
+        body: 'Bonjour Alex Muller, Merci pour votre participation... Voici votre ebook : https://socialboost.io/rewards/prompts-pro.pdf',
+        date: 'Aujourd\'hui, 11:43',
+        read: true,
+        type: 'outgoing',
+        subscriberName: 'Alex Muller',
+        associatedCampaign: 'Booster Tiktok Musique',
+        status: 'Validated'
+      }
+    ];
+  });
+
+  // Active persistent toast notifications
+  const [activeToasts, setActiveToasts] = useState<GmailAutomationToast[]>(() => {
+    const saved = localStorage.getItem('socialboost_active_toasts');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error(e); }
+    }
+    return [];
+  });
+
+  // Sync emails & toasts to LocalStorage
+  useEffect(() => {
+    localStorage.setItem('socialboost_sentinel_emails', JSON.stringify(realEmails));
+  }, [realEmails]);
+
+  useEffect(() => {
+    localStorage.setItem('socialboost_active_toasts', JSON.stringify(activeToasts));
+  }, [activeToasts]);
 
   // Read URL hashes if visitor opens campaign directly (Ex: /#campaign-1)
   useEffect(() => {
@@ -126,6 +201,10 @@ export default function App() {
       if (configured) {
         addNotification('Connexion Supabase ⚡', 'Tentative de synchronisation en temps réel avec le backend Supabase...', 'info');
         
+        setIsCampaignsLoading(true);
+        setIsFilesLoading(true);
+        setIsLeaderboardLoading(true);
+
         // 1. Load Campaigns
         const dbCamps = await dbFetchCampaigns();
         if (dbCamps) {
@@ -139,6 +218,7 @@ export default function App() {
           setCampaigns(campsToInstall);
           localStorage.setItem('socialboost_campaigns', JSON.stringify(campsToInstall));
         }
+        setIsCampaignsLoading(false);
 
         // 2. Load FILES
         const dbRewardFiles = await dbFetchFiles();
@@ -151,6 +231,7 @@ export default function App() {
           setFiles(filesToInstall);
           localStorage.setItem('socialboost_files', JSON.stringify(filesToInstall));
         }
+        setIsFilesLoading(false);
 
         // 3. Load LEADERBOARD / USERS
         const dbUsers = await dbFetchUsers();
@@ -163,6 +244,7 @@ export default function App() {
           setLeaderboard(leaderboardToInstall);
           localStorage.setItem('socialboost_leaderboard', JSON.stringify(leaderboardToInstall));
         }
+        setIsLeaderboardLoading(false);
       } else {
         // Fallback to standard offline behavior
         const localCamps = localStorage.getItem('socialboost_campaigns');
@@ -188,6 +270,10 @@ export default function App() {
           setLeaderboard(LEADERBOARD);
           localStorage.setItem('socialboost_leaderboard', JSON.stringify(LEADERBOARD));
         }
+
+        setIsCampaignsLoading(false);
+        setIsFilesLoading(false);
+        setIsLeaderboardLoading(false);
       }
     }
 
@@ -291,6 +377,118 @@ export default function App() {
       }
     }
   };
+
+  const simulateBackgroundGmailSuccess = (camp: Campaign, name: string, email: string) => {
+    const emailId = `g-out-${Date.now()}`;
+    const subjectLine = `[SocialBoost] Votre récompense pour ${camp.title}`;
+    const bodyContent = `Bonjour ${name},\n\nMerci infiniment pour votre participation à notre campagne "${camp.title}".\nNous avons validé avec succès l'action requise.\n\nVoici votre récompense numérique (${camp.rewardTitle}) :\n🔗 ${camp.rewardFileUrl || 'https://socialboost.io/downloads/file'}\n\nEn vous souhaitant une excellente journée,\nL'équipe ${camp.creatorName}`;
+
+    // Add incoming & outgoing simulated mails together for realistic inbox activity
+    const incomingMail: SentinelEmail = {
+      id: `g-in-${Date.now()}`,
+      from: email,
+      subject: `Action validée : preuve d'action pour ${camp.title}`,
+      body: `Bonjour, j'ai réalisé votre étape pour débloquer ${camp.rewardTitle} ! Merci d'automatiser l'envoi.`,
+      date: 'À l\'instant',
+      read: true,
+      type: 'incoming',
+      subscriberName: name,
+      associatedCampaign: camp.title,
+      status: 'Validated'
+    };
+
+    const outgoingMail: SentinelEmail = {
+      id: emailId,
+      from: 'etsvictoria11@gmail.com',
+      subject: subjectLine,
+      body: bodyContent,
+      date: 'À l\'instant',
+      read: true,
+      type: 'outgoing',
+      subscriberName: name,
+      associatedCampaign: camp.title,
+      status: 'Validated'
+    };
+
+    setRealEmails(prev => [incomingMail, outgoingMail, ...prev]);
+
+    // Update campaign participants
+    incrementCampaignParticipants(camp.id);
+
+    // Create a new Toast notification
+    const newToast: GmailAutomationToast = {
+      id: `toast-${Date.now()}`,
+      title: 'Gmail : Envoi Automatique ✅',
+      message: `E-mail automatique expédié à ${name} (${email}) avec succès.`,
+      campaignId: camp.id,
+      campaignTitle: camp.title,
+      subscriberEmail: email,
+      subscriberName: name,
+      rewardTitle: camp.rewardTitle,
+      rewardFileUrl: camp.rewardFileUrl,
+      timestamp: new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
+      read: false,
+      status: 'success'
+    };
+
+    setActiveToasts(prev => [newToast, ...prev]);
+
+    // Also add to global general notifications list
+    addNotification(
+      'Moteur Gmail Actif ✉️',
+      `Récompense '${camp.rewardTitle}' délivrée à ${email}.`,
+      'success'
+    );
+  };
+
+  const forceTriggerBackgroundSim = () => {
+    if (campaigns.length === 0) {
+      addNotification(
+        'Aucune campagne ⚠️',
+        'Veuillez créer et activer au moins une campagne pour tester le relais automatique.',
+        'warning'
+      );
+      return;
+    }
+    const activeCamps = campaigns.filter(c => c.status === 'active');
+    const camp = activeCamps.length > 0 ? activeCamps[0] : campaigns[0];
+    
+    const names = [
+      { n: 'Nabil Keita', e: 'nabil.keita@gmail.com' },
+      { n: 'Sophie Dubois', e: 'sophie.dubois@icloud.com' },
+      { n: 'Thomas Laurent', e: 't.laurent@hotmail.fr' },
+      { n: 'Estelle Martinez', e: 'estelle.mtz@yahoo.com' }
+    ];
+    const item = names[Math.floor(Math.random() * names.length)];
+    simulateBackgroundGmailSuccess(camp, item.n, item.e);
+  };
+
+  // Google Suite/Gmail background automation generator simulation effect
+  useEffect(() => {
+    if (userRole === 'creator') {
+      const interval = setInterval(() => {
+        // Run simulator (35% probability every 45s)
+        if (Math.random() > 0.65 && campaigns.length > 0) {
+          const activeCamps = campaigns.filter(c => c.status === 'active');
+          if (activeCamps.length > 0) {
+            const randomCamp = activeCamps[Math.floor(Math.random() * activeCamps.length)];
+            const testNames = [
+              { n: 'Karim Diallo', e: 'karim.diallo99@gmail.com' },
+              { n: 'Amandine Petit', e: 'ama.petit@outlook.com' },
+              { n: 'Julien Mercier', e: 'merci.julien@hotmail.fr' },
+              { n: 'Nora El Amrani', e: 'nora.elamrani@gmail.com' },
+              { n: 'Marcus Stone', e: 'marcus.stone@gmail.com' },
+              { n: 'Sonia Dubreuil', e: 'sonia.dub@yahoo.com' }
+            ];
+            const chosen = testNames[Math.floor(Math.random() * testNames.length)];
+            simulateBackgroundGmailSuccess(randomCamp, chosen.n, chosen.e);
+          }
+        }
+      }, 45000);
+
+      return () => clearInterval(interval);
+    }
+  }, [userRole, campaigns]);
 
   const addPoints = (pts: number) => {
     const nextVal = userPoints + pts;
@@ -685,6 +883,7 @@ export default function App() {
                   addPoints={addPoints}
                   setUpgradeModalPlan={setUpgradeModalPlan}
                   leaderboard={leaderboard}
+                  isLoading={isCampaignsLoading || isLeaderboardLoading}
                 />
               )}
 
@@ -696,6 +895,7 @@ export default function App() {
                   onUpdateCampaign={updateCampaign}
                   setCurrentTab={setCurrentTab}
                   onSelectCampaign={setActiveExecCampaign}
+                  isLoading={isCampaignsLoading}
                 />
               )}
 
@@ -714,12 +914,26 @@ export default function App() {
                   onAddFile={addFile}
                   onDeleteFile={deleteFile}
                   addNotification={addNotification}
+                  isLoading={isFilesLoading}
                 />
               )}
 
               {/* AMBASSADOR AFFILIATE TAB */}
               {currentTab === 'affiliation' && (
                 <Affiliation />
+              )}
+
+              {/* GMAIL AUTOMATION SUITE */}
+              {currentTab === 'creator-gmail' && (
+                <GmailAutomation 
+                  campaigns={campaigns}
+                  addNotification={addNotification}
+                  realEmails={realEmails}
+                  setRealEmails={setRealEmails}
+                  onTriggerBackgroundSim={forceTriggerBackgroundSim}
+                  activeToasts={activeToasts}
+                  setActiveToasts={setActiveToasts}
+                />
               )}
 
               {/* BLOG ARTICLES / FAQS / TERMS SUPPORT HUB */}
@@ -1045,6 +1259,96 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* ================= GMAIL PERSISTENT TOAST NOTIFICATIONS ================= */}
+        <div id="gmail-toasts-sidebar" className="fixed bottom-5 right-5 sm:right-6 sm:bottom-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+          <AnimatePresence>
+            {activeToasts.map((toast) => (
+              <motion.div
+                key={toast.id}
+                initial={{ opacity: 0, y: 50, scale: 0.85 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.85, x: 100 }}
+                transition={{ type: "spring", damping: 15, stiffness: 100 }}
+                className="bg-slate-900/95 dark:bg-zinc-900/95 border border-indigo-500/30 text-white rounded-2xl p-4 shadow-2xl flex flex-col gap-2.5 backdrop-blur-md pointer-events-auto select-none"
+              >
+                
+                {/* Header info bar */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1 px-1.5 rounded-md bg-red-600/30 border border-red-500/40 font-mono text-[9px] uppercase tracking-wider font-extrabold flex items-center gap-1 text-red-300">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                      Gmail Live
+                    </div>
+                    <span className="text-[10px] text-gray-400 font-mono font-medium">{toast.timestamp}</span>
+                  </div>
+                  <button
+                    onClick={() => setActiveToasts(prev => prev.filter(t => t.id !== toast.id))}
+                    className="p-1 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                    title="Dismiss Notification"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Main dynamic text description */}
+                <div className="space-y-0.5">
+                  <h4 className="text-xs font-black text-white flex items-center gap-1.5 leading-snug">
+                    <Mail className="w-4 h-4 text-red-500 animate-pulse" />
+                    {toast.title}
+                  </h4>
+                  <p className="text-[11px] text-gray-300 font-medium leading-relaxed">
+                    {toast.message}
+                  </p>
+                </div>
+
+                {/* Mini context details visual card */}
+                <div className="p-2 border border-white/5 bg-white/5 rounded-xl text-[10px] space-y-1 font-mono text-gray-400">
+                  <div className="flex justify-between gap-2">
+                    <span>Destinataire :</span>
+                    <strong className="text-gray-200 truncate max-w-[120px]">{toast.subscriberName}</strong>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <span>Email :</span>
+                    <strong className="text-gray-200 truncate max-w-[145px]">{toast.subscriberEmail}</strong>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <span>Campagne :</span>
+                    <strong className="text-indigo-300 truncate max-w-[145px] text-right">{toast.campaignTitle}</strong>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <span>Récompense :</span>
+                    <span className="text-amber-300 text-right font-bold truncate max-w-[145px]">{toast.rewardTitle}</span>
+                  </div>
+                </div>
+
+                {/* Action CTA link row */}
+                <div className="flex items-center justify-between border-t border-white/5 pt-2">
+                  <button
+                    onClick={() => {
+                      setCurrentTab('creator-gmail');
+                      addNotification('Navigation ✉️', 'Affichage du panneau Gmail Sentinel.', 'info');
+                    }}
+                    className="text-[10px] text-indigo-400 hover:text-indigo-300 font-extrabold flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    Voir dans la boîte d'envoi
+                    <ArrowUpRight className="w-3 h-3" />
+                  </button>
+                  <a
+                    href={toast.rewardFileUrl || 'https://socialboost.io/downloads/file'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-amber-500 hover:text-amber-400 font-extrabold flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    Tester le lien reward
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
 
       </div>
     </div>

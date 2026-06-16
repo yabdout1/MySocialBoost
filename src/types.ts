@@ -90,3 +90,31 @@ export interface AlertNotification {
   read: boolean;
   type: 'success' | 'info' | 'warning';
 }
+
+export interface SentinelEmail {
+  id: string;
+  from: string;
+  subject: string;
+  body: string;
+  date: string;
+  read: boolean;
+  type: 'incoming' | 'outgoing';
+  subscriberName?: string;
+  associatedCampaign?: string;
+  status: 'Validated' | 'Pending' | 'Rejected' | 'Manual';
+}
+
+export interface GmailAutomationToast {
+  id: string;
+  title: string;
+  message: string;
+  campaignId: string;
+  campaignTitle: string;
+  subscriberEmail: string;
+  subscriberName: string;
+  rewardTitle: string;
+  rewardFileUrl: string;
+  timestamp: string;
+  read: boolean;
+  status: 'success' | 'queued' | 'syncing';
+}

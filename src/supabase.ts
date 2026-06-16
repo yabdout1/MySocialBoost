@@ -68,6 +68,8 @@ CREATE TABLE IF NOT EXISTS campaigns (
   expiration_date TEXT NOT NULL,
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'expired', 'pending', 'paused')),
   points_reward INTEGER DEFAULT 100,
+  email_verification_enabled BOOLEAN DEFAULT FALSE,
+  email_for_verification TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

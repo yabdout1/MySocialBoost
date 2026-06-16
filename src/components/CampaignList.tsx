@@ -19,7 +19,9 @@ import {
   Sliders,
   Palette,
   Shield,
-  RefreshCw
+  RefreshCw,
+  Share2,
+  Smartphone
 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Campaign } from '../types';
@@ -279,7 +281,15 @@ export default function CampaignList({
   const [qrSize, setQrSize] = useState(256);
   const [qrLevel, setQrLevel] = useState<'L' | 'M' | 'Q' | 'H'>('Q');
   const [qrIncludeMargin, setQrIncludeMargin] = useState(true);
-  const [qrLogoOption, setQrLogoOption] = useState<'none' | 'platform' | 'star'>('platform');
+  const [qrLogoOption, setQrLogoOption] = useState<'none' | 'platform' | 'star' | 'custom'>('platform');
+  const [qrCustomLabel, setQrCustomLabel] = useState('');
+  const [qrCustomEmoji, setQrCustomEmoji] = useState('🎁');
+
+  React.useEffect(() => {
+    if (selectedShareCamp) {
+      setQrCustomLabel(selectedShareCamp.rewardTitle || '');
+    }
+  }, [selectedShareCamp]);
 
   const copyLink = (id: string) => {
     const url = `${window.location.origin}/#campaign-${id}`;
@@ -299,6 +309,55 @@ export default function CampaignList({
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  };
+
+  const handleMobileShare = async () => {
+    if (!selectedShareCamp) return;
+    const campaignUrl = `${window.location.origin}/#campaign-${selectedShareCamp.id}`;
+    const shareData = {
+      title: selectedShareCamp.title,
+      text: `Participez à la campagne "${selectedShareCamp.title}" pour gagner : ${qrCustomLabel || selectedShareCamp.rewardTitle} ! 🎁🚀`,
+      url: campaignUrl
+    };
+
+    const canvas = document.getElementById('campaign-qr-canvas') as HTMLCanvasElement;
+    if (canvas && navigator.canShare && navigator.share) {
+      try {
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            const file = new File([blob], `qrcode-${selectedShareCamp.id}.png`, { type: 'image/png' });
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                ...shareData,
+                files: [file]
+              });
+            } else {
+              await navigator.share(shareData);
+            }
+          } else {
+            await navigator.share(shareData);
+          }
+        }, 'image/png');
+      } catch (err) {
+        console.error('Error sharing image on mobile:', err);
+        try {
+          await navigator.share(shareData);
+        } catch (shareErr) {
+          console.log('Mobile share cancelled:', shareErr);
+        }
+      }
+    } else if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Mobile share failed:', err);
+      }
+    } else {
+      navigator.clipboard.writeText(campaignUrl);
+      setCopiedId(selectedShareCamp.id);
+      setTimeout(() => setCopiedId(null), 1800);
+      alert(language === 'en' ? "Sharing not natively supported. Link copied to clipboard!" : language === 'es' ? "Partager non supporté. Lien copié au presse-papiers !" : "Le partage natif n'est pas supporté. Le lien a été copié dans votre presse-papiers !");
+    }
   };
 
   const getPlatformColor = (plat: string) => {
@@ -609,14 +668,21 @@ export default function CampaignList({
                               width: 32,
                               excavate: true
                             }
+                          : qrLogoOption === 'custom'
+                          ? {
+                              src: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><text x="12" y="18" font-size="16" text-anchor="middle">${encodeURIComponent(qrCustomEmoji)}</text></svg>`,
+                              height: 32,
+                              width: 32,
+                              excavate: true
+                            }
                           : undefined
                       }
                     />
                   </div>
 
                   <div className="flex flex-col items-center gap-1">
-                    <span className="text-[10px] font-semibold text-slate-700 dark:text-zinc-300 font-mono">
-                      {selectedShareCamp.rewardTitle}
+                    <span className="text-[10px] font-semibold text-slate-700 dark:text-zinc-300 font-mono max-w-[200px] truncate text-center">
+                      {qrCustomLabel || selectedShareCamp.rewardTitle}
                     </span>
                     <span className="text-[9px] text-slate-400 font-mono tracking-widest block uppercase">
                       ID: SB-{selectedShareCamp.id.toUpperCase().substring(0, 8)}
@@ -657,11 +723,40 @@ export default function CampaignList({
               <div className="p-6 space-y-5 flex flex-col justify-between">
                 
                 {/* Visual Section: Colors */}
-                <div className="space-y-3">
+                <div className="space-y-3 text-left">
                   <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-1.5 font-sans">
                     <Palette className="w-4 h-4 text-violet-500" />
                     {language === 'en' ? 'Point Colors & Style' : language === 'es' ? 'Estilo y Color de Puntos' : 'Style & Palette de Couleurs'}
                   </label>
+
+                  {/* Preset Theme Palettes */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-slate-400 block font-mono">
+                      {language === 'en' ? 'Preset Theme Palettes:' : language === 'es' ? 'Paletas de Temas Predefinidas:' : 'Thèmes préconfigurés :'}
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { name: 'Indigo', fg: '#4f46e5', bg: '#ffffff' },
+                        { name: 'Sunset', fg: '#db2777', bg: '#fff1f2' },
+                        { name: 'Emerald', fg: '#059669', bg: '#ecfdf5' },
+                        { name: 'Cyber', fg: '#e11d48', bg: '#fef2f2' },
+                        { name: 'Dark', fg: '#18181b', bg: '#f8fafc' },
+                        { name: 'Gold', fg: '#d97706', bg: '#fef3c7' }
+                      ].map(theme => (
+                        <button
+                          key={theme.name}
+                          type="button"
+                          onClick={() => {
+                            setQrFgColor(theme.fg);
+                            setQrBgColor(theme.bg);
+                          }}
+                          className="px-2 py-1 text-[9px] rounded bg-white hover:bg-slate-50 dark:bg-zinc-800 dark:hover:bg-zinc-750 font-medium text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 cursor-pointer"
+                        >
+                          {theme.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   
                   {/* Preset foreground circles */}
                   <div className="space-y-2.5">
@@ -729,11 +824,12 @@ export default function CampaignList({
                     <Sparkles className="w-4 h-4 text-indigo-550" />
                     {language === 'en' ? 'Sub-logo Badge overlay' : language === 'es' ? 'Logotipo central de la red' : 'Logo central de marque'}
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     {[
                       { option: 'none', label: language === 'en' ? 'None' : language === 'es' ? 'Ninguno' : 'Sans logo' },
-                      { option: 'platform', label: language === 'en' ? 'Platform' : language === 'es' ? 'Red Social' : 'Réseau' },
-                      { option: 'star', label: language === 'en' ? 'Premium Star' : language === 'es' ? 'Estrella' : 'Étoile' },
+                      { option: 'platform', label: language === 'en' ? 'Platform' : language === 'es' ? 'Réseau' : 'Réseau' },
+                      { option: 'star', label: language === 'en' ? 'Star' : language === 'es' ? 'Estrella' : 'Étoile' },
+                      { option: 'custom', label: language === 'en' ? 'Emoji' : language === 'es' ? 'Emoji' : 'Émoji' },
                     ].map(item => (
                       <button
                         key={item.option}
@@ -745,6 +841,50 @@ export default function CampaignList({
                       </button>
                     ))}
                   </div>
+
+                  {qrLogoOption === 'custom' && (
+                    <div className="space-y-2 p-2.5 bg-slate-50 dark:bg-zinc-950 rounded-xl border border-slate-200/50 dark:border-zinc-800 animate-fade-in text-left">
+                      <span className="text-[10px] text-slate-400 block font-semibold leading-none mb-1">
+                        {language === 'en' ? 'Select or type custom emoji:' : language === 'es' ? 'Seleccione o escriba un emoji:' : 'Saisissez ou choisissez un émoji :'}
+                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {['🎁', '🔥', '🚀', '💡', '💎', '🎉', '📢', '⚡', '❤️'].map(emoji => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => setQrCustomEmoji(emoji)}
+                            className={`w-7 h-7 flex items-center justify-center rounded-lg border text-sm transition-all hover:scale-110 cursor-pointer ${qrCustomEmoji === emoji ? 'bg-indigo-50 border-indigo-500 scale-105 font-bold' : 'bg-white dark:bg-zinc-900 border-slate-205 dark:border-zinc-800'}`}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                        <input
+                          type="text"
+                          maxLength={2}
+                          value={qrCustomEmoji}
+                          onChange={(e) => setQrCustomEmoji(e.target.value)}
+                          className="w-10 h-7 bg-white dark:bg-zinc-900 text-center text-xs border border-slate-200 dark:border-zinc-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800 dark:text-zinc-100"
+                          placeholder="Emoji"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Custom Subtitle text */}
+                <div className="space-y-2 text-left">
+                  <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-1.5 font-sans">
+                    <Sliders className="w-4 h-4 text-pink-550" />
+                    {language === 'en' ? 'Custom Action Label' : language === 'es' ? 'Texto de Llamado a la Acción' : 'Texte d\'appel à l\'action'}
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={30}
+                    value={qrCustomLabel}
+                    onChange={(e) => setQrCustomLabel(e.target.value)}
+                    className="w-full text-xs bg-slate-50 dark:bg-zinc-950 p-2.5 rounded-xl border border-slate-200 dark:border-zinc-850 focus:outline-none focus:ring-1 focus:ring-indigo-505 text-slate-800 dark:text-zinc-200"
+                    placeholder={language === 'en' ? 'e.g., Scan to win!' : language === 'es' ? 'ej., ¡Escanea para ganar!' : 'ex : Scannez pour gagner !'}
+                  />
                 </div>
 
                 {/* Sizing & Borders */}
@@ -788,25 +928,35 @@ export default function CampaignList({
                 </div>
 
                 {/* Download and Share Button */}
-                <div className="pt-3 flex gap-2.5">
-                  <button
-                    id="qr-btn-download-trigger"
-                    onClick={downloadQRCode}
-                    className="flex-1 py-3 px-4 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
-                  >
-                    <Download className="w-4 h-4" />
-                    {language === 'en' ? 'Generate & Save PNG' : language === 'es' ? 'Generar y Guardar PNG' : 'Générer & Télécharger PNG'}
-                  </button>
+                <div className="pt-3 flex flex-col gap-2">
+                  <div className="flex gap-2.5">
+                    <button
+                      id="qr-btn-download-trigger"
+                      onClick={downloadQRCode}
+                      className="flex-1 py-3 px-4 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    >
+                      <Download className="w-4 h-4" />
+                      {language === 'en' ? 'Generate & Save PNG' : language === 'es' ? 'Generar y Guardar PNG' : 'Générer & Télécharger PNG'}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        alert(language === 'en' ? "Flyer configuration ready! Initiating secure print workflow on your device..." : language === 'es' ? "¡Configuración de folleto lista! Iniciando flujo de impresión directa en su dispositivo." : "Configuration du prospectus prête ! Lancement du protocole d'impression sur votre appareil...");
+                        window.print();
+                      }}
+                      className="px-4 py-3 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-950 text-slate-700 dark:text-zinc-300 font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                      title="Print Flyer"
+                    >
+                      <Printer className="w-4 h-4" />
+                    </button>
+                  </div>
 
                   <button
-                    onClick={() => {
-                      alert(language === 'en' ? "Flyer configuration ready! Initiating secure print workflow on your device..." : language === 'es' ? "¡Configuración de folleto lista! Iniciando flujo de impresión directa en su dispositivo." : "Configuration du prospectus prête ! Lancement du protocole d'impression sur votre appareil...");
-                      window.print();
-                    }}
-                    className="px-4 py-3 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-950 text-slate-700 dark:text-zinc-300 font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                    title="Print Flyer"
+                    onClick={handleMobileShare}
+                    className="w-full py-2.5 px-4 rounded-xl border-2 border-indigo-150 text-indigo-750 dark:border-indigo-900/50 dark:text-indigo-300 bg-indigo-50/20 hover:bg-indigo-50/45 dark:bg-indigo-950/20 hover:bg-indigo-50/50 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
                   >
-                    <Printer className="w-4 h-4" />
+                    <Smartphone className="w-4 h-4 text-indigo-500 animate-bounce" />
+                    {language === 'en' ? 'Share Custom Code on Mobile' : language === 'es' ? 'Compartir QR en Móvil' : 'Partager sur Mobile (WhatsApp, SMS...)'}
                   </button>
                 </div>
 
